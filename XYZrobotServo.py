@@ -1,5 +1,3 @@
-#Git Test 2
-
 import time
 import serial
 
@@ -32,13 +30,13 @@ class XYZrobotServo:
 		"""
 
 		header = bytearray(7)
-		size = data1Size + data2Size + len(header)
+		size = len(data1) + len(data2) + len(header)
 		checksum = size ^ self.id ^ cmd
 
 		# Calculate checksum
-		for i in range(data1Size):
+		for i in range(len(data1)):
 			checksum ^= data1[i]
-		for j in range(data2Size):
+		for j in range(len(data2)):
 			checksum ^= data2[j]
 
 		header[0] = 0xFF;
@@ -49,7 +47,7 @@ class XYZrobotServo:
 		header[5] = checksum & 0xFE;
 		header[6] = ~checksum & 0xFE;
 
-		stream.write(header)
+		self.stream.write(header)
 
 		# TODO: Write Data!
 
