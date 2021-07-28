@@ -1,9 +1,4 @@
-import time
 import serial
-
-# Another test commit 2
-
-ser = serial.Serial('/dev/ttyS0', baudrate = 9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
 
 class XYZrobotServo:
 
@@ -21,6 +16,7 @@ class XYZrobotServo:
 		self.stream = stream
 		self.id = id
 		self.lastError = None
+		self.debug = debug
 
 	def sendRequest(self, cmd, data1, data2 = None):
 		"""Sends a command to the servos.
@@ -31,25 +27,29 @@ class XYZrobotServo:
 			data2 (bytearray, optional): Data. Defaults to None.
 		"""
 
+		data1size = 0 if data1 is None else len(data1)
+		data2size = 0 if data2 is None else len(data2)
+
 		header = bytearray(7)
-		size = len(data1) + len(data2) + len(header)
+		size = data1size + data2size + len(header)
 		checksum = size ^ self.id ^ cmd
 
 		# Calculate checksum
-		for i in range(len(data1)):
+		for i in range(data1size):
 			checksum ^= data1[i]
-		for j in range(len(data2)):
+		for j in range(data2size):
 			checksum ^= data2[j]
 
-		header[0] = 0xFF;
-		header[1] = 0xFF;
-		header[2] = size;
-		header[3] = self.id;
-		header[4] = cmd;
-		header[5] = checksum & 0xFE;
-		header[6] = ~checksum & 0xFE;
+		header[0] = 0xFF
+		header[1] = 0xFF
+		header[2] = size
+		header[3] = self.id
+		header[4] = cmd
+		header[5] = checksum & 0xFE
+		header[6] = ~checksum & 0xFE
 
-		self.stream.write(header)
+		if self.debug:
+			print(header)
 
 		# TODO: Write Data!
 
@@ -58,5 +58,5 @@ class XYZrobotServo:
 
 
 	def readStatus(self):
-		self.sendRequest(self.CMD_STAT, None, 0);
+		self.sendRequest(self.CMD_STAT, None)
 
