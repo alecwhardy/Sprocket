@@ -15,6 +15,13 @@ class XYZrobotServo:
 	CMD_ROLLBACK     = 0x08
 	CMD_REBOOT       = 0x09
 
+	SET_POSITION_CONTROL = 0
+	SET_SPEED_CONTROL = 1
+	SET_TORQUE_OFF = 2
+	SET_POSITION_CONTROL_SERVO_ON = 3
+
+	DEFAULT_RESPONSE_SIZE = 64
+
 	class Error(Enum):
 		# No error.
 		NoError = 0
@@ -58,6 +65,7 @@ class XYZrobotServo:
 		ReadLengthWrong = 17
 
 	class Status:
+		
 		def __init__(self, bytes):
 			raw = unpack('BBHHHH', bytes)
 			self.statusError = raw[0]
@@ -112,10 +120,14 @@ class XYZrobotServo:
 		header[6] = ~checksum & 0xFE
 
 		if self.debug:
-			print(header)
+			print("Sending serial command: " + str(header))
 		self.stream.write(header)
 
-		# TODO: Write actual data here
+		if data1size > 0:
+			 self.stream.write(data1)
+		if data2size > 0:
+			self.stream.write(data2)
+		self.lastError = self.Error.NoError
 
 
 	def readAck(self, cmd, data1, data1size, data2 = None, data2size = 0):
@@ -127,20 +139,29 @@ class XYZrobotServo:
 			data1size (int): [description]
 			data2 (bytearray, optional): [description]. Defaults to None.
 			data2size (int, optional): [description]. Defaults to 0.
+
+		Returns:
+			header (bytes): header contents
 		"""
 
 		#The CMD byte for an acknowledgment always has bit 6 set.
 		cmd |= 0x40
 
-		response = bytearray(100)
+		response = bytearray(self.DEFAULT_RESPONSE_SIZE)
 		header = bytearray(7)
 		size = len(header) + data1size + data2size
 
 		response = self.stream.read(len(header))
-		header = response
+		if self.debug:
+			print("Received serial data: " + str(response))
+		
+		# Check for timeout
 		if len(response) != len(header):
 			self.lastError = self.Error.HeaderTimeout
 			return
+		
+		# If no timeout, fill the contents of header with the contents of the response
+		header[:] = response
 		if header[0] != 0xFF:
 			self.lastError = self.Error.HeaderByte1Wrong
 			return
@@ -161,6 +182,8 @@ class XYZrobotServo:
 		if data1size > 0:
 			# Read the data
 			response = self.stream.read(data1size)
+			if self.debug:
+				print("Received serial data1: " + str(response))
 			if len(response) != data1size:
 				self.lastError = self.Error.Data1Timeout
 				return
@@ -170,31 +193,29 @@ class XYZrobotServo:
 		if data2size > 0:
 			# Read the data
 			response = self.stream.read(data2size)
+			if self.debug:
+				print("Received serial data2: " + response)
 			if len(response) != data2size:
 				self.lastError = self.Error.Data2Timeout
 				return
 			# Copy the contents of response into data2
 			data2[:] = response
 
-		# TODO: Check the checksum!!!
-		"""  
-		uint8_t checksum = size ^ id ^ cmd;
-		for (uint8_t i = 0; i < data1Size; i++) { checksum ^= data1[i]; }
-		for (uint8_t i = 0; i < data2Size; i++) { checksum ^= data2[i]; }
+		# Check the checksum!!!
+		checksum = size ^ self.id ^ cmd
+		for i in range(data1size):
+			checksum ^= data1[i]
+		for i in range(data2size):
+			checksum ^= data2[i]
 
-		if (header[5] != (checksum & 0xFE))
-		{
-			lastError = XYZrobotServoError::Checksum1Wrong;
-			return;
-		}
-
-		if (header[6] != (~checksum & 0xFE))
-		{
-			lastError = XYZrobotServoError::Checksum2Wrong;
-			return;
-		}
-  		"""
-
+		if header[5] != checksum & 0xFE:
+			self.lastError = self.Error.Checksum1Wrong
+			return
+		if(header[6] != ~checksum & 0xFE):
+			self.lastError = self.Error.Checksum2Wrong
+			return
+		
+		# If we get here, there is no error, set lastError appropriately
 		self.lastError = self.Error.NoError
 		return header
 
@@ -210,6 +231,15 @@ class XYZrobotServo:
 		self.sendRequest(self.CMD_STAT, None)
 		ack_header = self.readAck(self.CMD_STAT, status_response, 10)
 		return self.Status(status_response)
+
+	def setPosition(self, position, playtime):
+		self.sendIJog(position, self.SET_POSITION_CONTROL, playtime)
 		
-
-
+	def sendIJog(self, goal, type, playtime):
+		data = bytearray(5)
+		data[0] = goal & 0xFF
+		data[1] = goal >> 8 & 0xFF
+		data[2] = type
+		data[3] = self.id
+		data[4] = playtime
+		self.sendRequest(self.CMD_I_JOG, data)
