@@ -1,7 +1,6 @@
-from io import RawIOBase
-import serial
 from enum import Enum
 from struct import *
+import math
 
 class XYZrobotServo:
 
@@ -234,6 +233,23 @@ class XYZrobotServo:
 
 	def setPosition(self, position, playtime):
 		self.sendIJog(position, self.SET_POSITION_CONTROL, playtime)
+
+	# TODO: TEST THIS!!!
+	def getPosition(self):
+		status = self.readStatus
+		return status.position
+
+
+	def set_position_deg(self, position_deg, playtime):
+		
+		x1 = -165
+		x2 = position_deg
+		x3 = 165
+		y1 = 0
+		y3 = 1023
+
+		deg_setpoint = math.ceil((((x2-x1)*(y3-y1))/(x3-x1))+y1)
+		self.setPosition(deg_setpoint, playtime)
 		
 	def sendIJog(self, goal, type, playtime):
 		data = bytearray(5)
