@@ -14,20 +14,22 @@ class Leg:
     
 
     THETA_KNEE_MIN = 15
-    THETA_KNEE_MAX = 160
+    THETA_KNEE_MAX_REL = 160
+    THETA_KNEE_MAX = THETA_KNEE_MAX_REL / 2
 
     L1_len = 120
     L2_len = 106
 
-    Z_L1_MIN = 0
-    Z_L1_MAX = L1_len
+    SHOULDER_LENGTH = 42
 
-    Z_L2_MIN = L2_len*math.sin(math.radians(THETA_KNEE_MIN))
-    Z_L2_MAX = L2_len*math.sin(math.radians(THETA_KNEE_MAX-90))   # TODO:  Do I need the -90 degrees?  Arctrig with angles >90 deg?!?
-
-    Z_MIN = Z_L1_MIN + Z_L2_MIN
-    Z_MAX = Z_L1_MAX + Z_L2_MAX
-
+    # Leg length constraints
+    # The "R" variable is for leg length, or, when the shoulders are flat, the height at the shoulder/thigh joint.
+    R_L1_MIN = 0
+    R_L1_MAX = L1_len
+    R_L2_MIN = L2_len*math.sin(math.radians(THETA_KNEE_MIN))
+    R_L2_MAX = L2_len*math.sin(math.radians(abs(THETA_KNEE_MAX-180)))
+    R_MIN = R_L1_MIN + R_L2_MIN
+    R_MAX = R_L1_MAX + R_L2_MAX
 
 
     def __init__(self, location, servos):
@@ -36,6 +38,7 @@ class Leg:
 
         self.side = 'L' if location[1] == 'L' else 'R'
         self.end = 'F' if location[0] == 'F' else 'R'
+        self.location = location
 
         # Front Left
         if location == "FL":
@@ -66,6 +69,12 @@ class Leg:
         # TODO: Use Servo getStatus to determine the starting position.
 
     def set_shoulder_position(self, position_degrees, speed):
+        """Sets the shoulder position, a positive valuve moves the shoulders "up", like a shrug
+
+        Args:
+            position_degrees ([type]): [description]
+            speed ([type]): [description]
+        """
 
         # Make sure we are at a valid position.  0 degrees is flat, allow +/- 45 degrees
         if not -60 <= position_degrees <= 60:
@@ -113,7 +122,7 @@ class Leg:
             speed (uint8): Time in 10ms units to respond to new position
         """
 
-        if not self.THETA_KNEE_MIN <= position_degrees <= self.THETA_KNEE_MAX:
+        if not self.THETA_KNEE_MIN <= position_degrees <= self.THETA_KNEE_MAX_REL:
             # Invalid Position!  TODO: Log error!
             return
 
@@ -124,44 +133,131 @@ class Leg:
         self.knee_stream.set_position_deg(position_degrees, speed)
         
 
-    def get_z_l1(self):
+    def get_r_l1(self):
         return self.L1_len*math.sin(math.radians(self.theta_thigh))
 
-    def get_z_l2(self):
+    def get_r_l2(self):
         return self.L2_len*math.sin(math.radians(self.theta_knee))
 
-    def get_z(self):
-        return self.get_z_l1 + self.get_z_l2
+    def get_r(self):
+        return self.get_r_l1 + self.get_r_l2
 
-    def set_z(self, desired_z, speed):
+    @staticmethod
+    def get_theta_knee_for_r(desired_r, theta_thigh):
+        r_l1 = Leg.L1_len*math.sin(math.radians(theta_thigh))
+        r_l2_req = desired_r - r_l1
+        try:
+            return math.degrees(math.asin(r_l2_req/Leg.L2_len))
+        except ValueError:
+            return 90
+
+
+    @staticmethod
+    def get_thetas_for_length(leg_length):
+        """Returns the thigh and knee angles needed to achieve a desired leg z length.
+           
+           Note that Leg Z length does NOT necessarily mean dog height, as a change in the shoulder angle will change this
+
+        Args:
+            desired_z (int): Desired leg length
+
+        Returns:
+            Tuple: Thigh Angle, Knee Angle
+        """
 
         # We are going to assume here that L1 and L2 are equal, so we will set theta_knee = theta_thigh
         # Remember that theta_knee must stay between 15-165 degrees
         # Because of this, if we need to go to a z-height lower than the position that would require theta_knee < 15
         # then we will lower theta_thigh even more.
 
-        if not self.Z_MIN <= desired_z <= self.Z_MAX:
+        if not Leg.R_MIN <= leg_length <= Leg.R_MAX:
             # TODO: Log error!
             return
 
-        if desired_z <= 2*self.Z_L2_MIN:
-            # Set theta_knee to min
-            self.knee_stream.set_position_deg(self.THETA_KNEE_MIN, speed)
+        if leg_length <= 2*Leg.R_L2_MIN:
 
             # Now try to set theta_thigh to determine the difference
-            desired_z_l1 = desired_z - self.Z_L2_MIN
-            desired_thigh_pos = math.degrees(math.asin(desired_z_l1/self.L1_len))
-
-            desired_knee_pos = self.THETA_KNEE_MIN
+            desired_z_l1 = leg_length -Leg.R_L2_MIN
+            desired_thigh_pos = math.degrees(math.asin(desired_z_l1/Leg.L1_len))
+            desired_knee_pos = Leg.THETA_KNEE_MIN
 
         else:
             # Let's just use L1 as the assumed leg segment length
-            desired_z_l1 = desired_z / 2
-            desired_thigh_pos = math.degrees(math.asin(desired_z_l1/self.L1_len))
+            desired_z_l1 = leg_length / 2
+            desired_thigh_pos = math.degrees(math.asin(desired_z_l1/Leg.L1_len))
             desired_knee_pos = desired_thigh_pos
 
         # Now set the positions
-        self.set_thigh_position(desired_thigh_pos, speed)
-        self.set_knee_position(desired_knee_pos, speed)
+        return desired_thigh_pos, desired_knee_pos
         
+    def set_position(self, X, Y, Z, speed):
+        """Sets the X, Y, Z position of each individual leg
+
+           TODO: Something isn't quite right.  Changing the X offset also changes the Z height, the
+           trig must be wrong somewhere.
+
+        Args:
+            X ([type]): [description]
+            Y ([type]): [description]
+            Z ([type]): [description]
+            speed ([type]): [description]
+        """
+
+        neg_X = False
+        if X<0:
+            neg_X = True
+            X = abs(X)
+
+        X = X+self.SHOULDER_LENGTH
+
+        if X == 0.0:
+            X = 0.001
+        if Y == 0.0:
+            Y = 0.001
+
+        # Take care of the X and Z offsets first
+        theta_ha1 = math.atan(X/Z) # rad
+        hip_hyp = X/math.sin(theta_ha1)
+        theta_ha2 = math.asin(Leg.SHOULDER_LENGTH/hip_hyp) # rad
+        required_r = Leg.SHOULDER_LENGTH / math.tan(theta_ha2)
+
+        theta_ha1_no_angle = math.atan(Leg.SHOULDER_LENGTH/Z)
+        if X>=0:
+            theta_shoulder = math.degrees(theta_ha1 - theta_ha1_no_angle)
+        else:
+            theta_shoulder = math.degrees(theta_ha1_no_angle + theta_ha1)
+
+        # The shoulder theta values work for RHS shoulders, but need to be inverted for LHS
+        if self.location == 'FL' or self.location == 'RR':
+            theta_shoulder = -theta_shoulder
+
+        if neg_X:
+            theta_shoulder = -theta_shoulder
+
+        theta_shoulder_offset = math.atan(Y/required_r)
+
+        # Take care of Y-position.  The Y-offset will control the thigh, and the knee will adjust to compensate.
+        # This motion does not move the shoulders
+
+        theta_thigh_offset = math.degrees(math.atan(Y/Z))
+        leg_length = Y/math.sin(theta_shoulder_offset)
+
+
+
+        # What angles would be needed to make the leg height the required length if standing upwards?
+        (_, theta_knee_base) = Leg.get_thetas_for_length(leg_length)
+
+        # If we are moving in +Y direction, then theta_thigh will decrease
+        theta_thigh = theta_knee_base-theta_thigh_offset
+
+        # Now calculate what theta_knee needs to be if we use theta_thigh
+        theta_knee = Leg.get_theta_knee_for_r(leg_length, theta_thigh)
+
+        
+        self.set_shoulder_position(theta_shoulder, speed)
+        self.set_thigh_position(theta_thigh, speed)   # Make sure to set thigh position
+        self.set_knee_position(theta_knee, speed)
+            
+
+        pass
 

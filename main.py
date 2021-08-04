@@ -1,5 +1,6 @@
 import serial
 import time
+import random
 from XYZrobotServo import XYZrobotServo
 from Leg import Leg
 from Dog import Dog
@@ -20,7 +21,6 @@ legs = [Leg("FL", leg_servos), Leg("FR", leg_servos), Leg("RL", leg_servos), Leg
 # Create the Dog object that lets us control the body position and movements
 dog = Dog(legs)
 
-legs[Leg.FL].set_z(156, 100)
 
 """
 def down():
@@ -33,21 +33,6 @@ def down():
     servos[6-1].setPosition(574, 200)
     servos[9-1].setPosition(574,200)
 
-def stand():
-    speed = 100
-    servos[1-1].setPosition(500, speed)
-    servos[4-1].setPosition(500, speed)
-    servos[7-1].setPosition(500, speed)
-    servos[10-1].setPosition(500, speed)
-    servos[3-1].setPosition(233, speed)
-    servos[12-1].setPosition(233, speed)
-    servos[6-1].setPosition(791, speed)
-    servos[9-1].setPosition(791, speed)
-    servos[2-1].setPosition(350, speed)
-    servos[11-1].setPosition(350, speed)
-    servos[5-1].setPosition(674, speed)
-    servos[8-1].setPosition(674, speed)
-
 def pushup():
     for i in range(10):
         down()
@@ -58,20 +43,14 @@ def pushup():
 """
 
 
-
+dog.flatten_shoulders(100)
 
 
 while True:
-    behavior = input ("Enter command (flat, stand, down, pushup): ")
-    if behavior == "flat":
-        dog.flatten_shoulders(100)
-    if behavior == "stand":
-        # stand()
-        pass
-    if behavior == "down":
-        # down()
-        pass
-    if behavior == "pushup":
-        # pushup()
-        pass
+    
+    resp = input("Enter X, Y, Z position: ").split(',')
 
+    for leg in legs:
+        leg.set_position(int(resp[0]), int(resp[1]), int(resp[2]), 100)
+
+    time.sleep(1)

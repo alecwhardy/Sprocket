@@ -1,3 +1,6 @@
+import math
+from Leg import Leg
+
 class Dog:
     
     def __init__(self, legs):
@@ -11,3 +14,9 @@ class Dog:
     def flatten_shoulders(self, speed):
         for leg in self.legs:
             leg.set_shoulder_position(0, speed)
+        
+    def stand_at_height(self, height, speed):
+        for leg in self.legs:
+            leg.set_z(height, speed)
+
+    
