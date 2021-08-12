@@ -67,7 +67,7 @@ def on_button_pressed(button):
         pz = 100
 
         for leg in legs:
-            leg.set_position(px, py, pz, 100)
+            leg.go_position(px, py, pz, 100)
 
 
 with Xbox360Controller(0, axis_threshold=0.5) as controller:
@@ -75,12 +75,19 @@ with Xbox360Controller(0, axis_threshold=0.5) as controller:
     while True:
         des_x = -40*controller.axis_l.x
         des_y = 40*-controller.axis_l.y
-        des_z = 100-(80*controller.axis_r.y)
+        des_z = 150
+        # des_z = 100-(80*controller.axis_r.y)
 
-        print(des_x, des_y, des_z)
+        # des_roll = 20*controller.axis_r.x
+        des_roll = 0
+        des_pitch = 20*controller.axis_r.y
+        des_yaw = 20*controller.axis_r.x
 
-        for leg in legs:
-            leg.set_position(des_x, des_y, des_z, 20)
+        print(des_x, des_y, des_roll, des_pitch)
+
+        # for leg in legs:
+        #     leg.go_position(des_x, des_y, des_z, 20)
+        dog.go_position(des_x, des_y, des_z, des_roll, des_pitch, des_yaw, 20)
         time.sleep(.2)
 
 

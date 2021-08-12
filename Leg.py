@@ -11,7 +11,10 @@ class Leg:
     theta_shoulder = 0
     theta_thigh = 0
     theta_knee = 0
-    
+
+    desired_x = 0
+    desired_y = 0
+    desired_z = 0
 
     THETA_KNEE_MIN = 15
     THETA_KNEE_MAX = 160
@@ -188,8 +191,16 @@ class Leg:
 
         # Now set the positions
         return desired_thigh_pos, desired_knee_pos
+
+    def go_desired(self, speed):
+        """Moves leg to the desired pos_x, pos_y, pos_z positions.  Make sure you set these variables first before calling this function
+
+        Args:
+            speed (int, between 0-255): Desired movement time, in units of 10ms
+        """
+        self.go_position(self.desired_x, self.desired_y, self.desired_z, speed)
         
-    def set_position(self, X, Y, Z, speed):
+    def go_position(self, X, Y, Z, speed):
         """Sets the X, Y, Z position of each individual leg
 
            TODO: Something isn't quite right.  Changing the X offset also changes the Z height, the
