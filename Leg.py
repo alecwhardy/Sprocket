@@ -14,8 +14,7 @@ class Leg:
     
 
     THETA_KNEE_MIN = 15
-    THETA_KNEE_MAX_REL = 160
-    THETA_KNEE_MAX = THETA_KNEE_MAX_REL / 2
+    THETA_KNEE_MAX = 160
 
     L1_len = 120
     L2_len = 106
@@ -111,20 +110,18 @@ class Leg:
         
 
     def set_knee_position(self, position_degrees, speed):
-        self._set_knee_position_relative(position_degrees + self.theta_thigh, speed)
-        self.theta_knee = position_degrees
-
-    def _set_knee_position_relative(self, position_degrees, speed):
-        """Set the position of the knee, relative to the angle of the thigh (L1)
+        """Set the position of the knee, relative to the thigh
 
         Args:
             position_degrees (int): Can be between 15 degrees and 160 degrees. 
             speed (uint8): Time in 10ms units to respond to new position
         """
 
-        if not self.THETA_KNEE_MIN <= position_degrees <= self.THETA_KNEE_MAX_REL:
+        if not self.THETA_KNEE_MIN <= position_degrees <= self.THETA_KNEE_MAX:
             # Invalid Position!  TODO: Log error!
             return
+
+        self.theta_knee = position_degrees
 
         # Position angles need to be inverted on the LHS
         if self.side == 'L':
@@ -144,6 +141,8 @@ class Leg:
 
     @staticmethod
     def get_theta_knee_for_r(desired_r, theta_thigh):
+        """ Dont use this
+        """
         r_l1 = Leg.L1_len*math.sin(math.radians(theta_thigh))
         r_l2_req = desired_r - r_l1
         try:
@@ -158,7 +157,7 @@ class Leg:
            
            Note that Leg Z length does NOT necessarily mean dog height, as a change in the shoulder angle will change this
 
-        Args:
+        Args:0, 
             desired_z (int): Desired leg length
 
         Returns:
@@ -197,10 +196,10 @@ class Leg:
            trig must be wrong somewhere.
 
         Args:
-            X ([type]): [description]
-            Y ([type]): [description]
-            Z ([type]): [description]
-            speed ([type]): [description]
+            X (int or float): Desired X position
+            Y (int or float): Desired Y position
+            Z (int or float): Desired Z position
+            speed (int, between 0-255): Desired movement time, in units of 10ms
         """
 
         neg_X = False
@@ -215,49 +214,32 @@ class Leg:
         if Y == 0.0:
             Y = 0.001
 
-        # Take care of the X and Z offsets first
-        theta_ha1 = math.atan(X/Z) # rad
-        hip_hyp = X/math.sin(theta_ha1)
-        theta_ha2 = math.asin(Leg.SHOULDER_LENGTH/hip_hyp) # rad
-        required_r = Leg.SHOULDER_LENGTH / math.tan(theta_ha2)
-
-        theta_ha1_no_angle = math.atan(Leg.SHOULDER_LENGTH/Z)
-        if X>=0:
-            theta_shoulder = math.degrees(theta_ha1 - theta_ha1_no_angle)
-        else:
-            theta_shoulder = math.degrees(theta_ha1_no_angle + theta_ha1)
+        # Leg length l
+        l_xz = math.sqrt((X*X)+(Z*Z)-(Leg.SHOULDER_LENGTH*Leg.SHOULDER_LENGTH))
+        h = math.sqrt(X*X + Z*Z)
+        theta_1_rad = math.atan(X/Z)
+        theta_2_rad = math.asin(Leg.SHOULDER_LENGTH/h)
+        l = math.sqrt((l_xz*l_xz)+(Y*Y))
+        
+        theta_shoulder = math.degrees(theta_2_rad-theta_1_rad)
 
         # The shoulder theta values work for RHS shoulders, but need to be inverted for LHS
         if self.location == 'FL' or self.location == 'RR':
             theta_shoulder = -theta_shoulder
-
         if neg_X:
             theta_shoulder = -theta_shoulder
 
-        theta_shoulder_offset = math.atan(Y/required_r)
+         # TODO: SHOULD THIS BE l OR l_xz
+        theta_thigh_offset = math.degrees(math.atan(Y/l_xz))
 
-        # Take care of Y-position.  The Y-offset will control the thigh, and the knee will adjust to compensate.
-        # This motion does not move the shoulders
-
-        theta_thigh_offset = math.degrees(math.atan(Y/Z))
-        leg_length = Y/math.sin(theta_shoulder_offset)
-
-
-
-        # What angles would be needed to make the leg height the required length if standing upwards?
-        (_, theta_knee_base) = Leg.get_thetas_for_length(leg_length)
+        # From SSS (Side Side Side) Law of Cosines
+        theta_knee = math.degrees(math.acos(((Leg.L1_len*Leg.L1_len)+(Leg.L2_len*Leg.L2_len)-(l*l))/(2*Leg.L1_len*Leg.L2_len)))
 
         # If we are moving in +Y direction, then theta_thigh will decrease
-        theta_thigh = theta_knee_base-theta_thigh_offset
-
-        # Now calculate what theta_knee needs to be if we use theta_thigh
-        theta_knee = Leg.get_theta_knee_for_r(leg_length, theta_thigh)
-
-        
+        # TODO: This might not be correct, does it assume that L1 and L2 are the same?
+        theta_thigh = (theta_knee/2)-theta_thigh_offset
+       
         self.set_shoulder_position(theta_shoulder, speed)
-        self.set_thigh_position(theta_thigh, speed)   # Make sure to set thigh position
+        self.set_thigh_position(theta_thigh, speed)
         self.set_knee_position(theta_knee, speed)
-            
-
-        pass
-
+        

@@ -1,6 +1,8 @@
 import serial
 import time
 import random
+from xbox360controller import Xbox360Controller
+import signal
 from XYZrobotServo import XYZrobotServo
 from Leg import Leg
 from Dog import Dog
@@ -11,7 +13,7 @@ ser = serial.Serial('/dev/ttyS0', baudrate = 9600, parity=serial.PARITY_NONE, st
 # Create a XYZrobotServo object for each leg servo
 leg_servos = []
 for i in range(12):
-    leg_servos.append(XYZrobotServo(ser, i+1, debug=True))
+    leg_servos.append(XYZrobotServo(ser, i+1, debug=False))
 
 # Create a Leg object for each leg in an array, following the order used by the Dog class initializer (FL, FR, RL, RR)
 # The Leg class already knows what servo ID corresponds to what joint
@@ -46,6 +48,7 @@ def pushup():
 dog.flatten_shoulders(100)
 
 
+"""
 while True:
     
     resp = input("Enter X, Y, Z position: ").split(',')
@@ -54,3 +57,45 @@ while True:
         leg.set_position(int(resp[0]), int(resp[1]), int(resp[2]), 100)
 
     time.sleep(1)
+"""
+
+def on_button_pressed(button):
+    if button.name == 'button_a':
+        global px, py, pz
+        px = 0
+        py = 0
+        pz = 100
+
+        for leg in legs:
+            leg.set_position(px, py, pz, 100)
+
+
+with Xbox360Controller(0, axis_threshold=0.5) as controller:
+
+    while True:
+        des_x = -40*controller.axis_l.x
+        des_y = 40*-controller.axis_l.y
+        des_z = 100-(80*controller.axis_r.y)
+
+        print(des_x, des_y, des_z)
+
+        for leg in legs:
+            leg.set_position(des_x, des_y, des_z, 20)
+        time.sleep(.2)
+
+
+
+    # controller.button_a.when_pressed = on_button_pressed
+
+
+
+
+        
+
+
+"""
+while True:    
+    for leg in legs:
+        leg.set_position(0, 0, 100, 100)
+    time.sleep(1)
+"""
