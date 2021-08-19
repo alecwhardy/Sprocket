@@ -259,3 +259,6 @@ class XYZrobotServo:
 		data[3] = self.id
 		data[4] = playtime
 		self.sendRequest(self.CMD_I_JOG, data)
+
+	def torqueOff(self):
+  		self.sendIJog(0, self.SET_TORQUE_OFF, 0)
