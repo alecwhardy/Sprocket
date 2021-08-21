@@ -25,7 +25,7 @@ class Leg:
     THETA_KNEE_MAX = 160
 
     L1_len = 120
-    L2_len = 106
+    L2_len = 120
 
     SHOULDER_LENGTH = 42
 

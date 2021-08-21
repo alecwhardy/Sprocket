@@ -1,5 +1,6 @@
 import math
 from Leg import Leg
+import time
 
 class Dog:
 
@@ -107,3 +108,27 @@ class Dog:
             leg.go_desired()
 
         pass
+
+    def prance(self, n, lift = 20, speed = 10, sleep_time = .1):
+        original_angles = []
+        new_angles = []
+        for leg in self.legs:
+            original_angles.append(leg.theta_knee)
+            new_angles.append(leg.theta_knee - lift)
+
+        ctr = 0
+        while ctr < int(n):
+            self.legs[0].go_knee_angle(new_angles[0], speed)
+            self.legs[3].go_knee_angle(new_angles[3], speed)
+            time.sleep(sleep_time)
+            self.legs[0].go_knee_angle(original_angles[0], speed)
+            self.legs[3].go_knee_angle(original_angles[3], speed)
+            time.sleep(sleep_time)
+            ctr += 1
+            self.legs[1].go_knee_angle(new_angles[1], speed)
+            self.legs[2].go_knee_angle(new_angles[2], speed)
+            time.sleep(sleep_time)
+            self.legs[1].go_knee_angle(original_angles[1], speed)
+            self.legs[2].go_knee_angle(original_angles[2], speed)
+            time.sleep(sleep_time)
+            ctr += 1

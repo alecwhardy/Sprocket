@@ -6,6 +6,7 @@ import signal
 from XYZrobotServo import XYZrobotServo
 from Leg import Leg
 from Dog import Dog
+import Walk
 
 
 def play_with_xbox(dog):
@@ -66,6 +67,7 @@ def cmd_control(dog):
             print("[space]: Home")
             print("Dog absolute move: A [x] [y] [z] [roll, optional] [pitch, optional] [yaw, optional] [speed, optional]")
             print("Dog relative move: R {x, y, z, roll, pitch, yaw} [value]")
+            print("Leg absolute move: L [n] [x] [y] [z]")
             print("Prance: prance [num]")
 
         response_tokens = response.split(' ')
@@ -110,39 +112,25 @@ def cmd_control(dog):
 
         if response_tokens[0] == 'prance':
             # Test code: Lift the front right leg a tiny bit (change the theta knee)
+            dog.prance(response_tokens[1])
+
+        if response_tokens[0] == 'L':
+            x = float(response_tokens[2])
+            y = float(response_tokens[3])
+            z = float(response_tokens[4])
+            legs[int(response_tokens[1])-1].go_position(x, y, z, 20)
+
+        if response_tokens[0] == 'w':
+            Walk.crude_walk_forward(dog, int(response_tokens[1]), 40, 30)
+
+
             
-            speed = 10
-            sleep_time = .1
-            lift_amount = 25
-            original_angles = []
-            new_angles = []
-            for leg in dog.legs:
-                original_angles.append(leg.theta_knee)
-                new_angles.append(leg.theta_knee - lift_amount)
-
-            ctr = 0
-            while ctr < int(response_tokens[1]):
-
-                dog.legs[0].go_knee_angle(new_angles[0], speed)
-                dog.legs[3].go_knee_angle(new_angles[3], speed)
-                time.sleep(sleep_time)
-                dog.legs[0].go_knee_angle(original_angles[0], speed)
-                dog.legs[3].go_knee_angle(original_angles[3], speed)
-                time.sleep(sleep_time)
-                ctr += 1
-                dog.legs[1].go_knee_angle(new_angles[1], speed)
-                dog.legs[2].go_knee_angle(new_angles[2], speed)
-                time.sleep(sleep_time)
-                dog.legs[1].go_knee_angle(original_angles[1], speed)
-                dog.legs[2].go_knee_angle(original_angles[2], speed)
-                time.sleep(sleep_time)
-                ctr += 1
 
             
 if __name__ == '__main__':
 
     # Create the Servo serial stream
-    ser = serial.Serial('/dev/ttyS0', baudrate = 9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
+    ser = serial.Serial('/dev/ttyS0', baudrate = 115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
 
     # Create a XYZrobotServo object for each leg servo
     leg_servos = []
