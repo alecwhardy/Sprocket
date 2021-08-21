@@ -73,6 +73,8 @@ class Leg:
         self.thigh_stream = servos[self.thigh_ID-1]
         self.knee_stream = servos[self.knee_ID-1]
 
+        self.servos = servos
+
         # TODO: Use Servo getStatus to determine the starting position.
 
     def no_torque(self):

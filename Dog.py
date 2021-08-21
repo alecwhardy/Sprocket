@@ -132,3 +132,8 @@ class Dog:
             self.legs[2].go_knee_angle(original_angles[2], speed)
             time.sleep(sleep_time)
             ctr += 1
+
+    def die(self):
+        for leg in self.legs:
+            for servo in leg.servos:
+                servo.torqueOff()

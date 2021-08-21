@@ -69,12 +69,22 @@ def cmd_control(dog):
             print("Dog relative move: R {x, y, z, roll, pitch, yaw} [value]")
             print("Leg absolute move: L [n] [x] [y] [z]")
             print("Prance: prance [num]")
+            print("Sleep: sleep")
+            print("Die: die")
 
         response_tokens = response.split(' ')
 
         if response_tokens[0] == '':
             dog.go_position(0, 0, 150, 0, 0, 0, 20)
             print("Resetting position")
+
+        if response_tokens[0] == 'die':
+            dog.die()
+
+        if response_tokens[0] == 'sleep':
+            dog.go_position(0, 0, 35, 0, 0, 0, 100)
+            time.sleep(1)
+            dog.die()
 
         if response_tokens[0] == 'A':
             x = 0 
