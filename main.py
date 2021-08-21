@@ -111,8 +111,11 @@ def cmd_control(dog):
             print("Relative move: {} {}".format(response_tokens[1], response_tokens[2]))
 
         if response_tokens[0] == 'prance':
-            # Test code: Lift the front right leg a tiny bit (change the theta knee)
-            dog.prance(response_tokens[1])
+            
+            # TODO: Which "prance" behavior is better?
+            # dog.prance(response_tokens[1])
+            Walk.crude_walk(dog, Walk.IN_PLACE, int(response_tokens[1]), 40, 30)
+
 
         if response_tokens[0] == 'L':
             x = float(response_tokens[2])
@@ -120,11 +123,9 @@ def cmd_control(dog):
             z = float(response_tokens[4])
             legs[int(response_tokens[1])-1].go_position(x, y, z, 20)
 
-        if response_tokens[0] == 'w':
-            Walk.crude_walk_forward(dog, int(response_tokens[1]), 40, 30)
+        if response_tokens[0] == 'wf':
+            Walk.crude_walk(dog, Walk.FORWARD, int(response_tokens[1]), 40, 30)
 
-
-            
 
             
 if __name__ == '__main__':
