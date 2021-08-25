@@ -30,6 +30,9 @@ class Dog:
         """
         self.legs = legs
 
+    def get_voltage(self):
+        return self.legs[0].servos[0].getVoltage()
+
     def flatten_shoulders(self, speed):
         for leg in self.legs:
             leg.go_shoulder_angle(0, speed)

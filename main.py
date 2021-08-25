@@ -1,8 +1,7 @@
+import os, psutil
 import serial
 import time
-import random
 from xbox360controller import Xbox360Controller
-import signal
 from XYZrobotServo import XYZrobotServo
 from Leg import Leg
 from Dog import Dog
@@ -71,6 +70,9 @@ def cmd_control(dog):
             print("Prance: prance [num]")
             print("Sleep: sleep")
             print("Die: die")
+            print("Resource usage: res")
+            print("Reboot: reboot")
+            print("Error: error")
 
         response_tokens = response.split(' ')
 
@@ -134,8 +136,38 @@ def cmd_control(dog):
             legs[int(response_tokens[1])-1].go_position(x, y, z, 20)
 
         if response_tokens[0] == 'wf':
-            Walk.crude_walk(dog, Walk.FORWARD, int(response_tokens[1]), 40, 30)
+            Walk.crude_walk(dog, Walk.FORWARD, int(response_tokens[1]), 30, 50, 12)
 
+        if response_tokens[0] == 'wl':
+            Walk.crude_walk(dog, Walk.TURN_LEFT, int(response_tokens[1]), 30, 50, 12)
+
+        if response_tokens[0] == 'wr':
+            Walk.crude_walk(dog, Walk.TURN_RIGHT, int(response_tokens[1]), 30, 50, 12)
+
+        if response_tokens[0] == 'wsl':
+            Walk.crude_walk(dog, Walk.SIDE_LEFT, int(response_tokens[1]), 30, 50, 12)
+
+        if response_tokens[0] == 'wsr':
+            Walk.crude_walk(dog, Walk.SIDE_RIGHT, int(response_tokens[1]), 30, 50, 12)
+
+        if response_tokens[0] == 'res':
+            # Resource Usage
+            process = psutil.Process(os.getpid())
+            print("Memory Usage (MB): " + str(process.memory_info().rss/1024/2014))
+            print("CPU Usage: "+str(psutil.cpu_percent()))
+            print("Voltage: {}V".format(dog.get_voltage()))
+
+        if response_tokens[0] == 'pid':
+            print(dog.legs[0].servos[0].readPID_RAM())
+
+        if response_tokens[0] == 'reboot':
+            for servo in dog.legs[0].servos:
+                servo.reboot()
+
+        if response_tokens[0] == 'error':
+            for servo in dog.legs[0].servos:
+                status = servo.readStatus()
+                print("Servo {}: {}".format(servo.id, status.statusError))
 
             
 if __name__ == '__main__':
@@ -156,7 +188,21 @@ if __name__ == '__main__':
     # Create the Dog object that lets us control the body position and movements
     dog = Dog(legs)
 
+    Kp_dat = bytearray(2)
+    Ki_dat = bytearray(2)
+    
+    Kp_dat[1] = 0x20
+    Kp_dat[0] = 0x00
+    
+    Ki_dat[1] = 0x00
+    Ki_dat[0] = 0x00
+    
+    for servo in leg_servos:
+        servo.RAMWrite(24, Kp_dat)
+        servo.RAMWrite(28, Ki_dat)
+
     dog.flatten_shoulders(100)
 
     # play_with_xbox(dog)
     cmd_control(dog)
+    

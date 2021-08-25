@@ -87,6 +87,46 @@ class XYZrobotServo:
 		while self.stream.in_waiting:
 			self.stream.read()
 
+	def memoryRead(self, cmd, startAddress, returnSize):
+		
+		self.flushRead()
+		request = bytearray(2)
+		request[0] = startAddress
+		request[1] = returnSize
+
+		self.sendRequest(cmd, request)
+
+		response = bytearray(4)
+		data = bytearray(returnSize)
+		self.readAck(cmd, response, 4, data, returnSize)
+
+		if self.lastError != self.Error.NoError:
+			return
+
+		if response[2] != request[0]:
+			self.lastError = self.Error.ReadOffsetWrong
+			return
+
+		if response[3] != request[1]:
+			self.lastError = self.Error.ReadLengthWrong
+			return
+
+		return data
+
+	def memoryWrite(self, cmd, startAddress, data):
+		request = bytearray(2)
+		request[0] = startAddress
+		request[1] = len(data)
+		self.sendRequest(cmd, request, data)
+
+	def RAMRead(self, startAddress, dataSize):
+		return self.memoryRead(self.CMD_RAM_READ, startAddress, dataSize)
+
+	def EEPROMRead(self, startAddress, dataSize):
+		return self.memoryRead(self.CMD_EEPROM_READ, startAddress, dataSize)
+
+	def RAMWrite(self, startAddress, data):
+		return self.memoryWrite(self.CMD_RAM_WRITE, startAddress, data)
 
 	def sendRequest(self, cmd, data1, data2 = None):
 		""" Sends a command to the servos.
@@ -260,5 +300,22 @@ class XYZrobotServo:
 		data[4] = playtime
 		self.sendRequest(self.CMD_I_JOG, data)
 
+	def readPID_RAM(self):
+		ret_data = self.RAMRead(24, 6)
+		Kp = ret_data[0] + (ret_data[1] << 8)
+		Kd = ret_data[2] + (ret_data[3] << 8)
+		Ki = ret_data[4] + (ret_data[5] << 8)
+		return Kp, Ki, Kd
+
+	def readP_RAM(self):
+		ret_data = self.RAMRead(24, 2)
+		return ret_data
+
 	def torqueOff(self):
   		self.sendIJog(0, self.SET_TORQUE_OFF, 0)
+
+	def reboot(self):
+		self.sendRequest(self.CMD_REBOOT, None)
+
+	def getVoltage(self):
+		return int(self.RAMRead(54, 1)[0])/16

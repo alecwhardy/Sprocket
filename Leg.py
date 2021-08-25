@@ -192,6 +192,7 @@ class Leg:
             neg_X = True
             X = abs(X)
 
+        # TODO: Should this be here?
         X = X+self.SHOULDER_LENGTH
 
         if X == 0.0:
@@ -200,13 +201,14 @@ class Leg:
             Y = 0.001
 
         # Leg length l
-        l_xz = math.sqrt((X*X)+(Z*Z)-(Leg.SHOULDER_LENGTH*Leg.SHOULDER_LENGTH))
         h = math.sqrt(X*X + Z*Z)
-        theta_1_rad = math.atan(X/Z)
-        theta_2_rad = math.asin(Leg.SHOULDER_LENGTH/h)
-        l = math.sqrt((l_xz*l_xz)+(Y*Y))
-        
+        s = Leg.SHOULDER_LENGTH
+        theta_1_rad = math.atan(Z/X)
+        theta_2_rad = math.acos(s/h)
         theta_shoulder = math.degrees(theta_2_rad-theta_1_rad)
+
+        l_xz = h*math.sin(theta_2_rad)
+        l = math.sqrt((l_xz*l_xz)+(Y*Y))
 
         # The shoulder theta values work for RHS shoulders, but need to be inverted for LHS
         if self.location == 'FL' or self.location == 'RR':
@@ -221,7 +223,6 @@ class Leg:
         theta_knee = math.degrees(math.acos(((Leg.L1_len*Leg.L1_len)+(Leg.L2_len*Leg.L2_len)-(l*l))/(2*Leg.L1_len*Leg.L2_len)))
 
         # If we are moving in +Y direction, then theta_thigh will decrease
-        # TODO: This might not be correct, does it assume that L1 and L2 are the same?
         theta_thigh = (theta_knee/2)-theta_thigh_offset
        
         self.go_shoulder_angle(theta_shoulder, speed)
