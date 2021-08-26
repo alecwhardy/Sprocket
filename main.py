@@ -1,59 +1,11 @@
 import os, psutil
 import serial
 import time
-from xbox360controller import Xbox360Controller
 from XYZrobotServo import XYZrobotServo
 from Leg import Leg
 from Dog import Dog
 import Walk
-
-
-def play_with_xbox(dog):
-   
-    with Xbox360Controller(0, axis_threshold=0.5) as controller:
-        des_x = 0
-        des_y = 0
-        des_z = 150
-
-        des_roll = 0
-        des_pitch = 0
-        des_yaw = 0
-        
-
-        while True:
-            des_x = 80*controller.axis_r.x
-            
-            if not controller.button_trigger_r.is_pressed:
-                des_y = 40*-controller.axis_r.y
-            else:
-                des_z -= 10*controller.axis_r.y
-            # des_z = 100-(80*controller.axis_r.y)
-
-
-            des_pitch = -20*controller.axis_l.y
-
-            if not controller.button_trigger_l.is_pressed:
-                des_roll = 30*controller.axis_l.x
-            else:
-                des_yaw += 2*controller.axis_l.x
-
-            print("{:3.0f} {:3.0f} {:3.0f} {:3.0f} {:3.0f} {:3.0f}".format(des_x, des_y, des_z, des_roll, des_pitch, des_yaw))
-
-            try:
-                dog.go_position(des_x, des_y, des_z, des_roll, des_pitch, des_yaw, 40)
-                time.sleep(.2)
-            except ValueError:
-                
-                if controller.has_rumble:
-                    controller.set_rumble(0.5, 0.5, 1000)
-
-                des_x = 0
-                des_y = 0
-                des_z = 150
-
-                des_roll = 0
-                des_pitch = 0
-                des_yaw = 0
+from XboxControl import XboxControl
 
 def cmd_control(dog):
 
@@ -188,6 +140,12 @@ if __name__ == '__main__':
     # Create the Dog object that lets us control the body position and movements
     dog = Dog(legs)
 
+    # Reboot the servos
+    for servo in dog.legs[0].servos:
+        servo.reboot()
+
+    xbox_controller = XboxControl(dog, 0)
+    
     Kp_dat = bytearray(2)
     Ki_dat = bytearray(2)
     
@@ -203,6 +161,8 @@ if __name__ == '__main__':
 
     dog.flatten_shoulders(100)
 
-    # play_with_xbox(dog)
+    while True:
+        xbox_controller.behave()
+
     cmd_control(dog)
     

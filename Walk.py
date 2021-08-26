@@ -14,7 +14,7 @@ LR = 3-1
 LF = 1-1
 
 
-def crude_walk(dog, direction, num_steps, step_len, lift_amount, speed):
+def crude_walk(dog, direction, num_steps, step_len, lift_amount, playtime):
 
     cur_step = 0
     cur_z = dog.z
@@ -24,18 +24,18 @@ def crude_walk(dog, direction, num_steps, step_len, lift_amount, speed):
         leg.go_position(0, 0, cur_z, 20)
 
     # Tuples of go_position arguments  
-    UP         = (        0,         0, cur_z-lift_amount, speed)
-    DOWN       = (        0,         0,             cur_z, speed)
-    FRONT      = (        0, -step_len, cur_z-lift_amount, speed)
-    BACK       = (        0,  step_len,             cur_z, speed)
-    IN_UP_R    = (-step_len,         0, cur_z-lift_amount, speed)
-    IN_DOWN_R  = (-step_len,         0,             cur_z, speed)
-    IN_UP_L    = ( step_len,         0, cur_z-lift_amount, speed)
-    IN_DOWN_L  = ( step_len,         0,             cur_z, speed)
-    OUT_UP_R   = ( step_len,         0, cur_z-lift_amount, speed)
-    OUT_DOWN_R = ( step_len,         0,             cur_z, speed)
-    OUT_UP_L   = (-step_len,         0, cur_z-lift_amount, speed)
-    OUT_DOWN_L = (-step_len,         0,             cur_z, speed)
+    UP         = (        0,         0, cur_z-lift_amount, playtime)
+    DOWN       = (        0,         0,             cur_z, playtime)
+    FRONT      = (        0, -step_len, cur_z-lift_amount, playtime)
+    BACK       = (        0,  step_len,             cur_z, playtime)
+    IN_UP_R    = (-step_len,         0, cur_z-lift_amount, playtime)
+    IN_DOWN_R  = (-step_len,         0,             cur_z, playtime)
+    IN_UP_L    = ( step_len,         0, cur_z-lift_amount, playtime)
+    IN_DOWN_L  = ( step_len,         0,             cur_z, playtime)
+    OUT_UP_R   = ( step_len,         0, cur_z-lift_amount, playtime)
+    OUT_DOWN_R = ( step_len,         0,             cur_z, playtime)
+    OUT_UP_L   = (-step_len,         0, cur_z-lift_amount, playtime)
+    OUT_DOWN_L = (-step_len,         0,             cur_z, playtime)
 
     # Tuples of UP, DOWN, FRONT, BACK XYZ coordinates
     # We can now unpack the tuple and use it as arguments with the * operator
@@ -55,7 +55,7 @@ def crude_walk(dog, direction, num_steps, step_len, lift_amount, speed):
         "OUT_DOWN_L": OUT_DOWN_L
     }
 
-    sleeptime = speed/100
+    sleeptime = playtime/100
 
     while cur_step < num_steps:
 
