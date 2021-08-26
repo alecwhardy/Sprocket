@@ -4,12 +4,18 @@ import time
 from XYZrobotServo import XYZrobotServo
 from Leg import Leg
 from Dog import Dog
-import Walk
+from Walk import Walk
 from XboxControl import XboxControl
 
 def cmd_control(dog):
 
     while True:
+
+        walk = Walk()
+        step_len = 30
+        lift_amount = 50
+        playtime = 12
+        walk.update_set_positions(dog, step_len, lift_amount, playtime)
 
         response = input("Please enter command: ")
 
@@ -78,7 +84,7 @@ def cmd_control(dog):
             
             # TODO: Which "prance" behavior is better?
             # dog.prance(response_tokens[1])
-            Walk.crude_walk(dog, Walk.IN_PLACE, int(response_tokens[1]), 40, 30)
+            walk.crude_walk(dog, Walk.IN_PLACE, int(response_tokens[1]), 40, 30)
 
 
         if response_tokens[0] == 'L':
@@ -88,19 +94,19 @@ def cmd_control(dog):
             legs[int(response_tokens[1])-1].go_position(x, y, z, 20)
 
         if response_tokens[0] == 'wf':
-            Walk.crude_walk(dog, Walk.FORWARD, int(response_tokens[1]), 30, 50, 12)
+            walk.crude_walk(dog, Walk.FORWARD, int(response_tokens[1]))
 
         if response_tokens[0] == 'wl':
-            Walk.crude_walk(dog, Walk.TURN_LEFT, int(response_tokens[1]), 30, 50, 12)
+            walk.crude_walk(dog, Walk.TURN_LEFT, int(response_tokens[1]))
 
         if response_tokens[0] == 'wr':
-            Walk.crude_walk(dog, Walk.TURN_RIGHT, int(response_tokens[1]), 30, 50, 12)
+            walk.crude_walk(dog, Walk.TURN_RIGHT, int(response_tokens[1]))
 
         if response_tokens[0] == 'wsl':
-            Walk.crude_walk(dog, Walk.SIDE_LEFT, int(response_tokens[1]), 30, 50, 12)
+            walk.crude_walk(dog, Walk.SIDE_LEFT, int(response_tokens[1]))
 
         if response_tokens[0] == 'wsr':
-            Walk.crude_walk(dog, Walk.SIDE_RIGHT, int(response_tokens[1]), 30, 50, 12)
+            walk.crude_walk(dog, Walk.SIDE_RIGHT, int(response_tokens[1]))
 
         if response_tokens[0] == 'res':
             # Resource Usage
@@ -144,7 +150,7 @@ if __name__ == '__main__':
     for servo in dog.legs[0].servos:
         servo.reboot()
 
-    xbox_controller = XboxControl(dog, 0)
+    # xbox_controller = XboxControl(dog, 0)
     
     Kp_dat = bytearray(2)
     Ki_dat = bytearray(2)
@@ -161,8 +167,8 @@ if __name__ == '__main__':
 
     dog.flatten_shoulders(100)
 
-    while True:
-        xbox_controller.behave()
+    # while True:
+    #     xbox_controller.behave()
 
     cmd_control(dog)
     
