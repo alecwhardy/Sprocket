@@ -1,6 +1,6 @@
 from xbox360controller import Xbox360Controller
 from functions import *
-import Walk
+from Walk import Walk
 import time
 
 # NOTE:  Make sure to run chmod 666 "brightness" file
@@ -79,9 +79,15 @@ class XboxControl:
 
         dog.go_position(0, 0, dog.z, 0, 0, 0, 20)
 
+        walk = Walk()
+        step_len = 30
+        lift_amount = 50
+        playtime = 12
+        # walk.update_set_positions(dog, step_len, lift_amount, playtime)
+
         while self.mode == self.MODE_WALK:
             
-            MIN_PLAYTIME_WALK = 10
+            MIN_PLAYTIME_WALK = 5
             MIN_PLAYTIME_TURN = 8
             MAX_PLAYTIME = 50
             
@@ -92,16 +98,24 @@ class XboxControl:
             wturn_playtime = int(lin_interp(100, abs(des_turn_speed), 0, MIN_PLAYTIME_TURN, MAX_PLAYTIME))
 
             if des_wf_speed > 5:
-                Walk.crude_walk(dog, Walk.FORWARD, 1, 30, 50, wf_playtime)
+                walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
+                walk.crude_walk(dog, Walk.FORWARD)
                 print("WF: Playtime {}".format(wf_playtime))
 
             elif des_turn_speed > 20:
-                Walk.crude_walk(dog, Walk.TURN_RIGHT, 1, 30, 50, wturn_playtime)
+                walk.update_set_positions(dog, step_len, lift_amount, wturn_playtime)
+                walk.crude_walk(dog, Walk.TURN_RIGHT)
                 print("TURN_R: Playtime {}".format(wturn_playtime))
 
             elif des_turn_speed < -20:
-                Walk.crude_walk(dog, Walk.TURN_LEFT, 1, 30, 50, wturn_playtime)
+                walk.update_set_positions(dog, step_len, lift_amount, wturn_playtime)
+                walk.crude_walk(dog, Walk.TURN_LEFT)
                 print("TURN_L: Playtime {}".format(wturn_playtime))
+
+            else:
+                walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
+                walk.crude_walk(dog, Walk.STILL)
+                print("Standing Still")
 
 
     def mode_stationary(self, dog):

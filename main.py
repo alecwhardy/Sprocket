@@ -9,9 +9,9 @@ from XboxControl import XboxControl
 
 def cmd_control(dog):
 
+    walk = Walk()
     while True:
 
-        walk = Walk()
         step_len = 30
         lift_amount = 50
         playtime = 12
@@ -94,7 +94,7 @@ def cmd_control(dog):
             legs[int(response_tokens[1])-1].go_position(x, y, z, 20)
 
         if response_tokens[0] == 'wf':
-            walk.crude_walk(dog, Walk.FORWARD, int(response_tokens[1]))
+            walk.crude_walk(dog, Walk.FORWARD)
 
         if response_tokens[0] == 'wl':
             walk.crude_walk(dog, Walk.TURN_LEFT, int(response_tokens[1]))
@@ -149,8 +149,9 @@ if __name__ == '__main__':
     # Reboot the servos
     for servo in dog.legs[0].servos:
         servo.reboot()
+    time.sleep(2)
 
-    # xbox_controller = XboxControl(dog, 0)
+    xbox_controller = XboxControl(dog, 0)
     
     Kp_dat = bytearray(2)
     Ki_dat = bytearray(2)
@@ -165,10 +166,10 @@ if __name__ == '__main__':
         servo.RAMWrite(24, Kp_dat)
         servo.RAMWrite(28, Ki_dat)
 
-    dog.flatten_shoulders(100)
+    dog.wake_up()
 
-    # while True:
-    #     xbox_controller.behave()
+    while True:
+        xbox_controller.behave()
 
-    cmd_control(dog)
+    #cmd_control(dog)
     

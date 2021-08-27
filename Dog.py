@@ -140,3 +140,6 @@ class Dog:
         for leg in self.legs:
             for servo in leg.servos:
                 servo.torqueOff()
+
+    def wake_up(self):
+        self.go_position(0, 0, 150, 0, 0, 0, 50)
