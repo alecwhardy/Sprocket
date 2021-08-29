@@ -147,9 +147,9 @@ if __name__ == '__main__':
     dog = Dog(legs)
 
     # Reboot the servos
-    for servo in dog.legs[0].servos:
-        servo.reboot()
-    time.sleep(2)
+    # for servo in dog.legs[0].servos:
+    #     servo.reboot()
+    # time.sleep(2)
 
     xbox_controller = XboxControl(dog, 0)
     

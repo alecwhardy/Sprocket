@@ -14,6 +14,7 @@ class Walk:
     SIDE_LEFT = 3
     TURN_RIGHT = 4
     TURN_LEFT = 5
+    BACKWARD = 6
 
     STILL = 10
 
@@ -48,18 +49,21 @@ class Walk:
         # We can now unpack the tuple and use it as arguments with the * operator
         # for example: dog.legs[RR].go_position(*set_positions["FRONT"])
         self.set_positions = {
-            "UP"         : (        0,         0, cur_z-lift_amount, playtime), 
-            "DOWN"       : (        0,         0,             cur_z, playtime), 
-            "FRONT"      : (        0, -step_len, cur_z-lift_amount, playtime), 
-            "BACK"       : (        0,  step_len,             cur_z, playtime), 
-            "IN_UP_R"    : (-step_len,         0, cur_z-lift_amount, playtime),
-            "IN_UP_L"    : ( step_len,         0, cur_z-lift_amount, playtime),
-            "IN_DOWN_L"  : ( step_len,         0,             cur_z, playtime),
-            "IN_DOWN_R"  : (-step_len,         0,             cur_z, playtime),
-            "OUT_UP_R"   : ( step_len,         0, cur_z-lift_amount, playtime), 
-            "OUT_UP_L"   : (-step_len,         0, cur_z-lift_amount, playtime), 
-            "OUT_DOWN_R" : ( step_len,         0,             cur_z, playtime), 
-            "OUT_DOWN_L" : (-step_len,         0,             cur_z, playtime)
+            "UP"           : (        0,         0, cur_z-lift_amount, playtime), 
+            "DOWN"         : (        0,         0,             cur_z, playtime), 
+            "FORWARD_UP"   : (        0, -step_len, cur_z-lift_amount, playtime),
+            "FORWARD_DOWN" : (        0, -step_len,             cur_z, playtime), 
+            "BACK_DOWN_L"  : (        0,  step_len,             cur_z, playtime),
+            "BACK_DOWN_R"  : (        0,  step_len,             cur_z, playtime),
+            "BACK_UP"      : (        0,  step_len, cur_z-lift_amount, playtime), 
+            "IN_UP_R"      : (-step_len,         0, cur_z-lift_amount, playtime),
+            "IN_UP_L"      : ( step_len,         0, cur_z-lift_amount, playtime),
+            "IN_DOWN_L"    : ( step_len,         0,             cur_z, playtime),
+            "IN_DOWN_R"    : (-step_len,         0,             cur_z, playtime),
+            "OUT_UP_R"     : ( step_len,         0, cur_z-lift_amount, playtime), 
+            "OUT_UP_L"     : (-step_len,         0, cur_z-lift_amount, playtime), 
+            "OUT_DOWN_R"   : ( step_len,         0,             cur_z, playtime), 
+            "OUT_DOWN_L"   : (-step_len,         0,             cur_z, playtime)
         }
 
 
@@ -92,6 +96,9 @@ class Walk:
         # Do something like set_positions["IN"] = (X, Y, Z, speed)
         if direction == self.FORWARD:
             self._crude_step_forward(dog, self.set_positions, sleeptime)
+
+        if direction == self.BACKWARD:
+            self._crude_step_backward(dog, self.set_positions, sleeptime)
 
         elif direction == self.IN_PLACE:
             self._crude_step_in_place(dog, self.set_positions, sleeptime)
@@ -139,10 +146,10 @@ class Walk:
 
         if self.state == 2:
             #  RR leg FRONT      RF leg BACK       LR leg BACK            LF leg FRONT
-            dog.legs[RR].go_position(*set_positions["FRONT"])
-            dog.legs[RF].go_position(*set_positions["BACK"])
-            dog.legs[LR].go_position(*set_positions["BACK"])
-            dog.legs[LF].go_position(*set_positions["FRONT"])
+            dog.legs[RR].go_position(*set_positions["FORWARD_UP"])
+            dog.legs[RF].go_position(*set_positions["BACK_DOWN_R"])
+            dog.legs[LR].go_position(*set_positions["BACK_DOWN_L"])
+            dog.legs[LF].go_position(*set_positions["FORWARD_UP"])
             time.sleep(sleeptime)
 
         if self.state == 3:
@@ -155,11 +162,44 @@ class Walk:
 
         if self.state == 4:
             #  RR leg BACK       RF leg FRONT      LR leg FRONT           LF leg BACK
-            dog.legs[RR].go_position(*set_positions["BACK"])
-            dog.legs[RF].go_position(*set_positions["FRONT"])
-            dog.legs[LR].go_position(*set_positions["FRONT"])
-            dog.legs[LF].go_position(*set_positions["BACK"])
+            dog.legs[RR].go_position(*set_positions["BACK_DOWN_R"])
+            dog.legs[RF].go_position(*set_positions["FORWARD_UP"])
+            dog.legs[LR].go_position(*set_positions["FORWARD_UP"])
+            dog.legs[LF].go_position(*set_positions["BACK_DOWN_L"])
             time.sleep(sleeptime)
+
+    def _crude_step_backward(self, dog, set_positions, sleeptime):
+        
+        if self.state == 1:
+            #  RR leg UP         RF leg DOWN       LR leg DOWN            LF leg UP
+            dog.legs[RR].go_position(*set_positions["UP"])
+            dog.legs[RF].go_position(*set_positions["DOWN"])
+            dog.legs[LR].go_position(*set_positions["DOWN"])
+            dog.legs[LF].go_position(*set_positions["UP"])
+            time.sleep(sleeptime)
+
+        if self.state == 2:
+            #  RR leg FRONT      RF leg BACK       LR leg BACK            LF leg FRONT
+            dog.legs[RR].go_position(*set_positions["BACK_UP"])
+            dog.legs[RF].go_position(*set_positions["FORWARD_DOWN"])
+            dog.legs[LR].go_position(*set_positions["FORWARD_DOWN"])
+            dog.legs[LF].go_position(*set_positions["BACK_UP"])
+            time.sleep(sleeptime)
+
+        if self.state == 3:
+            #  RR leg DOWN       RF leg UP         LR leg UP              LF leg DOWN
+            dog.legs[RR].go_position(*set_positions["DOWN"])
+            dog.legs[RF].go_position(*set_positions["UP"])
+            dog.legs[LR].go_position(*set_positions["UP"])
+            dog.legs[LF].go_position(*set_positions["DOWN"])
+            time.sleep(sleeptime)
+
+        if self.state == 4:
+            #  RR leg BACK       RF leg FRONT      LR leg FRONT           LF leg BACK
+            dog.legs[RR].go_position(*set_positions["FORWARD_DOWN"])
+            dog.legs[RF].go_position(*set_positions["BACK_UP"])
+            dog.legs[LR].go_position(*set_positions["BACK_UP"])
+            dog.legs[LF].go_position(*set_positions["FORWARD_DOWN"])
 
     def _crude_step_in_place(self, dog, set_positions, sleeptime):
 

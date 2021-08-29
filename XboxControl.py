@@ -5,6 +5,7 @@ import time
 
 # NOTE:  Make sure to run chmod 666 "brightness" file
 #        /sys/class/leds/xpad0 $ sudo chmod 666 brightness
+#        sudo chmod 666 /sys/class/leds/xpad0/brightness
 # Microsoft X-Box 360 pad at index 0
 # Axes: 5
 #         axis_l
@@ -81,7 +82,7 @@ class XboxControl:
 
         walk = Walk()
         step_len = 30
-        lift_amount = 50
+        lift_amount = 70
         playtime = 12
         # walk.update_set_positions(dog, step_len, lift_amount, playtime)
 
@@ -94,20 +95,40 @@ class XboxControl:
             des_wf_speed = int(-100*self.controller.axis_r.y)
             des_turn_speed = int(100*self.controller.axis_r.x)
 
-            wf_playtime = int(lin_interp(100, des_wf_speed, 0, MIN_PLAYTIME_WALK, MAX_PLAYTIME))
+            # wf_playtime = int(lin_interp(100, des_wf_speed, 0, MIN_PLAYTIME_WALK, MAX_PLAYTIME))
+            wf_playtime = 10
+            step_len = int(-100*self.controller.axis_r.y)
             wturn_playtime = int(lin_interp(100, abs(des_turn_speed), 0, MIN_PLAYTIME_TURN, MAX_PLAYTIME))
 
-            if des_wf_speed > 5:
+            if step_len > 100:
+                lift_amount += step_len//5
+
+
+            if des_wf_speed > 10:
                 walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
+
+                # Apply correction factor to "BACK_DOWN_L"
+                old = walk.set_positions["BACK_DOWN_L"]
+                corrected_position = (old[0], 1.3*old[1], old[2], old[3])
+                walk.set_positions["BACK_DOWN_L"] = corrected_position
+
                 walk.crude_walk(dog, Walk.FORWARD)
-                print("WF: Playtime {}".format(wf_playtime))
+                print("WF: Steplen {}".format(step_len))
+
+            elif des_wf_speed < -10:
+                step_len = -step_len
+                walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
+                walk.crude_walk(dog, Walk.BACKWARD)
+                print("WB: Steplen {}".format(step_len))
 
             elif des_turn_speed > 20:
+                step_len = 30
                 walk.update_set_positions(dog, step_len, lift_amount, wturn_playtime)
                 walk.crude_walk(dog, Walk.TURN_RIGHT)
                 print("TURN_R: Playtime {}".format(wturn_playtime))
 
             elif des_turn_speed < -20:
+                step_len = 30
                 walk.update_set_positions(dog, step_len, lift_amount, wturn_playtime)
                 walk.crude_walk(dog, Walk.TURN_LEFT)
                 print("TURN_L: Playtime {}".format(wturn_playtime))
@@ -117,6 +138,10 @@ class XboxControl:
                 walk.crude_walk(dog, Walk.STILL)
                 print("Standing Still")
 
+    def reboot(self, button):
+        for servo in self.dog.legs[0].servos:
+            servo.reboot()
+        time.sleep(2)
 
     def mode_stationary(self, dog):
    
@@ -127,16 +152,24 @@ class XboxControl:
         des_roll = 0
         des_pitch = 0
         des_yaw = 0
-        
 
+        self.controller.button_y.when_pressed = self.reboot
+        
         while self.mode == self.MODE_STATIONARY:
             des_x = 80*self.controller.axis_r.x
             
             if not self.controller.button_trigger_r.is_pressed:
                 des_y = 40*-self.controller.axis_r.y
             else:
-                des_z -= 10*self.controller.axis_r.y
+                des_z -= 30*self.controller.axis_r.y
             # des_z = 100-(80*controller.axis_r.y)
+
+            # TODO: Make these constants
+            if des_z > 230:
+                des_z = 230
+
+            elif des_z < 30:
+                des_z = 30
 
             des_pitch = -20*self.controller.axis_l.y
 
