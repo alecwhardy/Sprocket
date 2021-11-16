@@ -8,9 +8,15 @@ class Leg:
     RL = 2
     RR = 3
 
+    # The current angles
     theta_shoulder = 0
     theta_thigh = 0
     theta_knee = 0
+
+    # The calculated angles
+    calc_theta_shoulder = 0
+    calc_theta_thigh = 0
+    calc_theta_knee = 0
 
     x = 0
     y = 0
@@ -20,6 +26,7 @@ class Leg:
     desired_y = 0
     desired_z = 0
     desired_speed = 0
+    desired_done = False     # After we update desired_*, this is set False until we have moved there
 
     THETA_KNEE_MIN = 15
     THETA_KNEE_MAX = 160
@@ -153,7 +160,15 @@ class Leg:
 
         self.knee_stream.set_position_deg(position_degrees, speed)
 
-    def set_desired_to_position(self):
+    def set_desired(self, x, y, z, speed=None):
+        self.desired_x = x
+        self.desired_y = y
+        self.desired_z = z
+        if speed is not None:
+            self.desired_speed = speed
+        self.desired_done = False
+
+    def set_desired_to_current(self):
         """ Sets the desired setpoint variables equal to the current position
         """
         self.desired_x = self.x
@@ -168,25 +183,16 @@ class Leg:
             speed (int, between 0-255): Desired movement time, in units of 10ms
         """
         self.go_position(self.desired_x, self.desired_y, self.desired_z, self.desired_speed)
-        
-    def go_position(self, X, Y, Z, speed):
-        """Sets the X, Y, Z position of each individual leg.  Also, this writes the values to desired_x, desired_y, desired_z
+        self.desired_done = True
 
-           TODO: Something isn't quite right.  Changing the X offset also changes the Z height, the
-           trig must be wrong somewhere.
+    def calc_position(self, X, Y, Z):
+        """Returns tulpe of (theta_shoulder, theta_thigh, theta_knee).  Also sets calc_theta values
 
         Args:
             X (int or float): Desired X position
             Y (int or float): Desired Y position
             Z (int or float): Desired Z position
-            speed (int, between 0-255): Desired movement time, in units of 10ms
         """
-
-        self.x = X
-        self.y = Y
-        self.z = Z
-        self.speed = speed
-
         neg_X = False
         if X<0:
             neg_X = True
@@ -224,6 +230,32 @@ class Leg:
 
         # If we are moving in +Y direction, then theta_thigh will decrease
         theta_thigh = (theta_knee/2)-theta_thigh_offset
+
+        self.calc_theta_shoulder = theta_shoulder
+        self.calc_theta_thigh = theta_thigh
+        self.calc_theta_knee = theta_knee
+
+        return (theta_shoulder, theta_thigh, theta_knee)
+
+    def calc_desired(self):
+        self.calc_position(self.desired_x, self.desired_y, self.desired_z)
+        
+    def go_position(self, X, Y, Z, speed):
+        """Sets the X, Y, Z position of each individual leg. X, Y, Z is specific to the shoulder.
+
+        Args:
+            X (int or float): Desired X position
+            Y (int or float): Desired Y position
+            Z (int or float): Desired Z position
+            speed (int, between 0-255): Desired movement time, in units of 10ms
+        """
+
+        self.x = X
+        self.y = Y
+        self.z = Z
+        self.speed = speed
+
+        theta_shoulder, theta_thigh, theta_knee = self.calc_position(X, Y, Z)
        
         self.go_shoulder_angle(theta_shoulder, speed)
         self.go_thigh_angle(theta_thigh, speed)

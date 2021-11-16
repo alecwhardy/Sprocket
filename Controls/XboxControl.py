@@ -1,6 +1,7 @@
 from xbox360controller import Xbox360Controller
 from functions import *
 from Walk import Walk
+import os
 import time
 
 # NOTE:  Make sure to run chmod 666 "brightness" file
@@ -40,6 +41,9 @@ class XboxControl:
 
         self.controller_id = controller_id
         self.mode = self.MODE_STATIONARY
+
+        os.system('sudo chmod 666 /sys/class/leds/xpad0/brightness')
+
         self.controller = Xbox360Controller(controller_id, axis_threshold=0.2)
 
         self.controller.button_mode.when_pressed = self.changeMode
@@ -156,7 +160,7 @@ class XboxControl:
         self.controller.button_y.when_pressed = self.reboot
         
         while self.mode == self.MODE_STATIONARY:
-            des_x = 80*self.controller.axis_r.x
+            des_x = -80*self.controller.axis_r.x
             
             if not self.controller.button_trigger_r.is_pressed:
                 des_y = 40*-self.controller.axis_r.y

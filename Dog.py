@@ -1,12 +1,23 @@
 import math
 from Leg import Leg
 import time
+from CommandHandler import CommandHandler
+from Motion import Motion
 
 class Dog:
+    """ Contains all of the necessary code to determine the current state of the dog.  All behavior is handled by the Behavior class
+
+    Returns:
+        [type]: [description]
+    """
 
     LENGTH = 200
     WIDTH = 117
 
+    NEUTRAL_HEIGHT = 150
+    NEUTRAL_SPEED = 50
+
+    # The most recent x, y, z, r, p, yaw values that the dog moved to after a go_position() call
     x = 0
     y = 0
     z = 0
@@ -14,14 +25,10 @@ class Dog:
     pitch = 0
     yaw = 0
 
-    desired_x = 0
-    desired_y = 0
-    desired_z = 0
-    desired_roll = 0
-    desired_pitch = 0
-    desired_yaw = 0
-    desired_speed = 0
-    
+    sensor_roll = 0
+    sensor_pitch = 0
+    sensor_yaw = 0
+
     def __init__(self, legs):
         """[summary]
 
@@ -29,6 +36,9 @@ class Dog:
             legs (List of Legs): Follow order Front Left, Front Right, Rear Left, Rear Right
         """
         self.legs = legs
+        self.command_handler = CommandHandler(self)
+        self.motion = Motion(self)
+
 
     def get_voltage(self):
         return self.legs[0].servos[0].getVoltage()
@@ -36,20 +46,6 @@ class Dog:
     def flatten_shoulders(self, speed):
         for leg in self.legs:
             leg.go_shoulder_angle(0, speed)
-
-    def set_desired_to_position(self):
-        """ Sets the desired setpoint variables equal to the current position
-        """
-        self.desired_x = self.x
-        self.desired_y = self.y
-        self.desired_z = self.z
-        self.desired_roll = self.roll
-        self.desired_pitch = self.pitch
-        self.desired_yaw = self.yaw
-        self.desired_speed = self.speed
-
-    def go_desired(self):
-        self.go_position(self.desired_x, self.desired_y, self.desired_z, self.desired_roll, self.desired_pitch, self.desired_yaw, self.desired_speed)
 
     def go_position(self, X, Y, Z, roll, pitch, yaw, speed):
 
@@ -105,41 +101,49 @@ class Dog:
             if leg.end == 'R':
                 leg.desired_x -= X_front_offset
         
-
-        # Update all of the leg positions
+        # Calculate where each leg needs to go
+        # We need to do all of the shoulders first, then thighs, then knees in order, otherwise the legs don't move at the same time
+        # i.e. leg[3] will run last and behind the others if we don't run this way
         for leg in self.legs:
-            leg.go_desired()
-
-        pass
-
-    def prance(self, n, lift = 20, speed = 10, sleep_time = .1):
-        original_angles = []
-        new_angles = []
+            leg.calc_desired()
+        # Go to the calculated shoulder angles
         for leg in self.legs:
-            original_angles.append(leg.theta_knee)
-            new_angles.append(leg.theta_knee - lift)
-
-        ctr = 0
-        while ctr < int(n):
-            self.legs[0].go_knee_angle(new_angles[0], speed)
-            self.legs[3].go_knee_angle(new_angles[3], speed)
-            time.sleep(sleep_time)
-            self.legs[0].go_knee_angle(original_angles[0], speed)
-            self.legs[3].go_knee_angle(original_angles[3], speed)
-            time.sleep(sleep_time)
-            ctr += 1
-            self.legs[1].go_knee_angle(new_angles[1], speed)
-            self.legs[2].go_knee_angle(new_angles[2], speed)
-            time.sleep(sleep_time)
-            self.legs[1].go_knee_angle(original_angles[1], speed)
-            self.legs[2].go_knee_angle(original_angles[2], speed)
-            time.sleep(sleep_time)
-            ctr += 1
+            leg.go_shoulder_angle(leg.calc_theta_shoulder, leg.desired_speed)
+        # Go to the calculated thigh angles
+        for leg in self.legs:
+            leg.go_thigh_angle(leg.calc_theta_thigh, leg.desired_speed)
+        # Go to the calculated knee angles
+        for leg in self.legs:
+            leg.go_knee_angle(leg.calc_theta_knee, leg.desired_speed)
 
     def die(self):
+        print("Dog is dying...")
         for leg in self.legs:
             for servo in leg.servos:
                 servo.torqueOff()
 
     def wake_up(self):
+        print("Resetting position 'waking up'")
         self.go_position(0, 0, 150, 0, 0, 0, 50)
+        #TODO: Calibrate Euler angles here
+
+    def servo_reboot(self):
+        for servo in self.legs[0].servos:
+            servo.reboot()
+
+    def live(self, verbose = False):
+        """ Main loop.  Update sensor data, update servos, and respond to behaviors and controls
+        """
+
+        while True:
+
+            # get new commands
+            self.command_handler.get_new_commands()
+            
+            # handle commands
+            self.command_handler.handle_commands()
+
+            # update sensors
+            
+            # update motion
+            self.motion.update_motion()

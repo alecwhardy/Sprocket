@@ -1,8 +1,16 @@
-def do_dog():
+from Walk import Walk
+import time
 
-    # Control the behavior of the dog in the following order.  Lower numbers are higher priority:
-    # 3. AI Behavior control
-    # 2. XBOX controller
-    # 1. Command Queue
+class Behavior:
+    """ Class that autonomously issues commands.  AI will have control over this.
+    """
 
-    pass
+    def __init__(self, dog):
+        self.dog = dog
+        self.walk = Walk(dog)
+
+    def behave(self):
+        # Main behave function.  This is called every loop cycle.
+        pass
+
+    
