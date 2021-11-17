@@ -24,6 +24,7 @@ class Dog:
     roll = 0
     pitch = 0
     yaw = 0
+    speed = 0
 
     sensor_roll = 0
     sensor_pitch = 0
@@ -48,14 +49,6 @@ class Dog:
             leg.go_shoulder_angle(0, speed)
 
     def go_position(self, X, Y, Z, roll, pitch, yaw, speed):
-
-        self.x = X
-        self.y = Y
-        self.z = Z
-        self.roll = roll
-        self.pitch = pitch
-        self.yaw = yaw
-        self.speed = speed
 
         if roll == 0:
             roll = 0.001
@@ -105,7 +98,15 @@ class Dog:
         # We need to do all of the shoulders first, then thighs, then knees in order, otherwise the legs don't move at the same time
         # i.e. leg[3] will run last and behind the others if we don't run this way
         for leg in self.legs:
-            leg.calc_desired()
+            if leg.calc_desired():
+                # If we successfully calculate the desired
+                self.x = X
+                self.y = Y
+                self.z = Z
+                self.roll = roll
+                self.pitch = pitch
+                self.yaw = yaw
+                self.speed = speed
         # Go to the calculated shoulder angles
         for leg in self.legs:
             leg.go_shoulder_angle(leg.calc_theta_shoulder, leg.desired_speed)

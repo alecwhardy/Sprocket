@@ -52,6 +52,29 @@ class Motion:
             self.dog.roll = roll
             self.dog.pitch = pitch
             self.dog.yaw = yaw
+    
+    def request_relative_position(self, x, y, z, roll, pitch, yaw, speed):
+
+        new_x = self.dog.x + x
+        new_y = self.dog.y + y
+        new_z = self.dog.z + z
+        new_roll = self.dog.roll + roll
+        new_pitch = self.dog.pitch + pitch
+        new_yaw = self.dog.yaw + yaw
+        new_speed = self.dog.speed + speed
+
+        if self.current_motion == self.STATIONARY:
+            self.dog.go_position(new_x, new_y, new_z, new_roll, new_pitch, new_yaw, new_speed)
+
+        else:
+            # TODO: If we are walking or prancing, update desired_* variables so that the walking algorithm takes into consideration the desired offsets.
+            self.dog.x = new_x
+            self.dog.y = new_y
+            self.dog.z = new_z
+            self.dog.roll = new_roll
+            self.dog.pitch = new_pitch
+            self.dog.yaw = new_yaw
+            self.dog.speed = new_speed
 
     def request_absolute_leg(self, leg, x, y, z, speed):
         if self.current_motion == self.STATIONARY:

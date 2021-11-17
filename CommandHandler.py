@@ -13,8 +13,8 @@ class CommandHandler:
         self.commands = Commands(self.dog)
         self.command_queue = deque()
 
-        self.console_controller = ConsoleControl()
-        #self.xbox_controller = XboxControl()
+        self.console_controller = ConsoleControl(self.dog)
+        self.xbox_controller = XboxControl()
 
     def get_new_commands(self):
 
@@ -23,6 +23,11 @@ class CommandHandler:
             self.command_queue.append(console_command)
 
         # Handle XBOX commands here
+        xbox_command = self.xbox_controller.get_commands()
+        if xbox_command is not None:
+            for command in xbox_command:
+                self.command_queue.append(command)
+
 
         # Handle Behavior commands here
 

@@ -1,8 +1,12 @@
 import sys, select, time
 from Commands import Command
+from Leg import Leg
 
 
 class ConsoleControl:
+
+    def __init__(self, dog):
+        self.dog = dog
 
     def get_commands(self):
         """ Returns the command from the console. """
@@ -38,6 +42,12 @@ class ConsoleControl:
 
         elif response_tokens[0] == 'A':
             return Command(command = "absolute_move", args = response_tokens[1:])
+
+        elif response_tokens[0] == 'R':
+            return Command(command = "relative_move", args = response_tokens[1:])
+
+        elif response_tokens[0] == 'pos':
+            print("Position: {: 3.0f}  {: 3.0f}  {: 3.0f}  {: 3.0f} {: 3.0f} {: 3.0f} {: 3.0f}".format(self.dog.x, self.dog.y, self.dog.z, self.dog.roll, self.dog.pitch, self.dog.yaw, self.dog.speed))
 
         elif response_tokens[0] == 'L':
             return Command(command = "absolute_leg_move", args = response_tokens[1:])

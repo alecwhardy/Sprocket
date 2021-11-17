@@ -63,9 +63,38 @@ class Commands:
             pass
 
         self.dog.motion.request_absolute_position(x, y, z, roll, pitch, yaw, speed)
+        # print("Position: {: 3.0f}  {: 3.0f}  {: 3.0f}  {: 3.0f} {: 3.0f} {: 3.0f} {: 3.0f}".format(x, y, z, roll, pitch, yaw, speed))
+
+    def relative_move(self, args):
+        x = 0 
+        y = 0
+        z = 0
+        roll = 0
+        pitch = 0
+        yaw = 0
+        speed = 0
+
+        try:
+            x = float(args[0])
+            y = float(args[1])
+            z = float(args[2])
+            roll = float(args[3])
+            pitch = float(args[4])
+            yaw = float(args[5])
+            speed = int(args[6])
+        except IndexError:
+            pass
+
+        self.dog.motion.request_relative_position(x, y, z, roll, pitch, yaw, speed)
         print("Position: {: 3.0f}  {: 3.0f}  {: 3.0f}  {: 3.0f} {: 3.0f} {: 3.0f} {: 3.0f}".format(x, y, z, roll, pitch, yaw, speed))
 
+
     def absolute_leg_move(self, args):
+        """ Move an single leg to an absolute position, coorindates relative to shoulder joint
+
+        Args:
+            args (List): (int(leg), float(x, y, z))
+        """
         
         leg = int(args[0])
         x = float(args[1])

@@ -206,30 +206,35 @@ class Leg:
         if Y == 0.0:
             Y = 0.001
 
-        # Leg length l
-        h = math.sqrt(X*X + Z*Z)
-        s = Leg.SHOULDER_LENGTH
-        theta_1_rad = math.atan(Z/X)
-        theta_2_rad = math.acos(s/h)
-        theta_shoulder = math.degrees(theta_2_rad-theta_1_rad)
+        try:
 
-        l_xz = h*math.sin(theta_2_rad)
-        l = math.sqrt((l_xz*l_xz)+(Y*Y))
+            # Leg length l
+            h = math.sqrt(X*X + Z*Z)
+            s = Leg.SHOULDER_LENGTH
+            theta_1_rad = math.atan(Z/X)
+            theta_2_rad = math.acos(s/h)
+            theta_shoulder = math.degrees(theta_2_rad-theta_1_rad)
 
-        # The shoulder theta values work for RHS shoulders, but need to be inverted for LHS
-        if self.location == 'FL' or self.location == 'RR':
-            theta_shoulder = -theta_shoulder
-        if neg_X:
-            theta_shoulder = -theta_shoulder
+            l_xz = h*math.sin(theta_2_rad)
+            l = math.sqrt((l_xz*l_xz)+(Y*Y))
 
-         # TODO: SHOULD THIS BE l OR l_xz
-        theta_thigh_offset = math.degrees(math.atan(Y/l_xz))
+            # The shoulder theta values work for RHS shoulders, but need to be inverted for LHS
+            if self.location == 'FL' or self.location == 'RR':
+                theta_shoulder = -theta_shoulder
+            if neg_X:
+                theta_shoulder = -theta_shoulder
 
-        # From SSS (Side Side Side) Law of Cosines
-        theta_knee = math.degrees(math.acos(((Leg.L1_len*Leg.L1_len)+(Leg.L2_len*Leg.L2_len)-(l*l))/(2*Leg.L1_len*Leg.L2_len)))
+            # TODO: SHOULD THIS BE l OR l_xz
+            theta_thigh_offset = math.degrees(math.atan(Y/l_xz))
 
-        # If we are moving in +Y direction, then theta_thigh will decrease
-        theta_thigh = (theta_knee/2)-theta_thigh_offset
+            # From SSS (Side Side Side) Law of Cosines
+            theta_knee = math.degrees(math.acos(((Leg.L1_len*Leg.L1_len)+(Leg.L2_len*Leg.L2_len)-(l*l))/(2*Leg.L1_len*Leg.L2_len)))
+
+            # If we are moving in +Y direction, then theta_thigh will decrease
+            theta_thigh = (theta_knee/2)-theta_thigh_offset
+
+        except ValueError:
+            return False
 
         self.calc_theta_shoulder = theta_shoulder
         self.calc_theta_thigh = theta_thigh
@@ -238,7 +243,7 @@ class Leg:
         return (theta_shoulder, theta_thigh, theta_knee)
 
     def calc_desired(self):
-        self.calc_position(self.desired_x, self.desired_y, self.desired_z)
+        return self.calc_position(self.desired_x, self.desired_y, self.desired_z)
         
     def go_position(self, X, Y, Z, speed):
         """Sets the X, Y, Z position of each individual leg. X, Y, Z is specific to the shoulder.
