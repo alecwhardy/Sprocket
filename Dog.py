@@ -15,7 +15,7 @@ class Dog:
     WIDTH = 117
 
     NEUTRAL_HEIGHT = 150
-    NEUTRAL_SPEED = 50
+    NEUTRAL_SPEED = 20
 
     # The most recent x, y, z, r, p, yaw values that the dog moved to after a go_position() call
     x = 0
@@ -125,7 +125,7 @@ class Dog:
 
     def wake_up(self):
         print("Resetting position 'waking up'")
-        self.go_position(0, 0, 150, 0, 0, 0, 50)
+        self.go_position(0, 0, 150, 0, 0, 0, self.NEUTRAL_SPEED)
         #TODO: Calibrate Euler angles here
 
     def servo_reboot(self):
@@ -148,3 +148,5 @@ class Dog:
             
             # update motion
             self.motion.update_motion()
+
+            time.sleep(0)

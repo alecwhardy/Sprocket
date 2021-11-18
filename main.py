@@ -24,11 +24,6 @@ if __name__ == '__main__':
 
     # Create the Dog object that lets us control the body position and movements
     dog = Dog(legs)
-
-    # Reboot the servos
-    for servo in dog.legs[0].servos:
-        servo.reboot()
-    time.sleep(2)
     
     Kp_dat = bytearray(2)
     Ki_dat = bytearray(2)

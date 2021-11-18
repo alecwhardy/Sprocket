@@ -16,6 +16,12 @@ class Commands:
     def __init__(self, dog):
         self.dog = dog
 
+    def reboot(self):
+        # Reboot the servos
+        for servo in self.dog.legs[0].servos:
+            servo.reboot()
+        time.sleep(2)
+
     def die(self):
         self.dog.die()
 
@@ -24,6 +30,11 @@ class Commands:
         self.dog.go_position(0, 0, 35, 0, 0, 0, 100)
         time.sleep(1)
         self.dog.die()
+
+    def toggle_xbox(self):
+        self.dog.command_handler.xbox_controller_enable = not self.dog.command_handler.xbox_controller_enable
+        print("XBOX control: ", end='')
+        print(self.dog.command_handler.xbox_controller_enable)
 
     def reset_position(self):
         self.dog.motion.current_motion = Motion.STATIONARY
@@ -39,6 +50,9 @@ class Commands:
         for servo in self.dog.legs[0].servos:
             status = servo.readStatus()
             print("Servo {}: {}".format(servo.id, status.statusError))
+
+    def speed(self, args):
+        self.dog.speed = int(args[0])
 
     def absolute_move(self, args):
         
@@ -121,7 +135,7 @@ class Commands:
     def walk(self, args = None):
 
 
-        if args is None:
+        if args is None or len(args) == 0:
             direction = 'f'
         else:
            direction = args[0]
@@ -140,7 +154,8 @@ class Commands:
         except (IndexError, TypeError):
             pass
 
-        self.dog.motion.steps_remaining = -1
+        self.dog.motion.steps_remaining = n
+        
         self.dog.motion.do_walk(direction)
 
     def walk_params(self, args):

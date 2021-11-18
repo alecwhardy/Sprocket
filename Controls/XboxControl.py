@@ -1,34 +1,15 @@
-from xbox360controller import Xbox360Controller
-from functions import *
-from Walk import Walk
 import os
 import time
-from Commands import Command
+from collections import deque
 
-# NOTE:  Make sure to run chmod 666 "brightness" file
-#        /sys/class/leds/xpad0 $ sudo chmod 666 brightness
-#        sudo chmod 666 /sys/class/leds/xpad0/brightness
-# Microsoft X-Box 360 pad at index 0
-# Axes: 5
-#         axis_l
-#         axis_r
-#         hat
-#         trigger_l
-#         trigger_r
-# Buttons: 11
-#         button_a
-#         button_b
-#         button_x
-#         button_y
-#         button_trigger_l
-#         button_trigger_r
-#         button_select
-#         button_start
-#         button_mode  (Player Select)
-#         button_thumb_l
-#         button_thumb_r
-# Rumble: no
-# Driver version: 2.1.0 1.0.1
+from xbox360controller import Xbox360Controller
+
+from Commands import Command
+from functions import *
+from Walk import Walk
+from Motion import Motion
+
+# NOTE:  IF XBOX CONTROL IS ENABLED AND IN WALK MODE, CONSOLE COMMANDS WILL NOT WORK!!!
 
 class XboxControl:
 
@@ -49,7 +30,9 @@ class XboxControl:
         'y' : 0
     }
 
-    def __init__(self, controller_id = 0, axis_threshold = 0.3):
+    def __init__(self, dog, controller_id = 0, axis_threshold = 0.2):
+
+        self.dog = dog
 
         self.controller_id = controller_id
         self.mode = self.MODE_STATIONARY
@@ -108,9 +91,8 @@ class XboxControl:
 
         if not self.last_update + self.UPDATE_PERIOD < cur_millis:
             # If it's not time to update positions or send a command, return None
-            # Add a really tiny time.sleep so that the xbox controller position can update.  
-            # The axes seem to "stick" without this, possibly because the xbox controller driver runs on a seperate thread.
-            time.sleep(.00000001)
+            # Do a time.sleep(0) to let the xbox controller driver thread run so we actually get updated positions
+            time.sleep(0)
             return None
 
         # Update internal axes
@@ -118,10 +100,64 @@ class XboxControl:
         
         if self.mode == self.MODE_STATIONARY:
             self.last_update = cur_millis
+            # commands_stationary will always only give a single command, so add it to a list with only its one command
             return [self.commands_stationary()]
         
-        # elif self.mode == self.MODE_WALK:
-        #     self.commands_walk(self.dog)
+        elif self.mode == self.MODE_WALK:
+           return self.commands_walk()
+
+    def commands_walk(self):
+
+        command_queue = deque()
+
+        step_len = 50
+        lift_amount = 50
+        playtime = 20
+
+        des_wf_speed = int(-100*self.axis_r['y'])
+        des_turn_speed = int(100*self.axis_r['x'])
+        wf_playtime = 10
+
+        step_len = int(-100*self.axis_r['y'])
+        # wturn_playtime = int(lin_interp(100, abs(des_turn_speed), 0, MIN_PLAYTIME_TURN, MAX_PLAYTIME))
+
+        if step_len > 100:
+            lift_amount += step_len//5
+
+        # Walk forward
+        if des_wf_speed > 10:
+            
+            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime)))
+
+            # Apply correction factor to "BACK_DOWN_L"
+            # old = walk.set_positions["BACK_DOWN_L"]
+            # corrected_position = (old[0], 1.3*old[1], old[2], old[3])
+            # walk.set_positions["BACK_DOWN_L"] = corrected_position
+
+            if not self.dog.motion.current_motion == Motion.WALK:
+                command_queue.append(Command(command = 'walk', args=('f')))
+
+            # print("{} {} {}".format(step_len, lift_amount, playtime))
+
+        # Stop walking
+        else:
+            if not self.dog.motion.current_motion == Motion.STATIONARY:
+                command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime)))
+                command_queue.append(Command(command = 'stop', args=None))
+            else:
+                return None
+
+        if not len(command_queue) > 0:
+            return None
+        else:
+            return command_queue
+            
+
+
+
+
+
+
 
     # def commands_walk(self, dog):
 
@@ -192,27 +228,24 @@ class XboxControl:
    
         des_x = 0
         des_y = 0
-        des_z = 150
+        des_z = self.dog.z
 
         des_roll = 0
         des_pitch = 0
         des_yaw = 0
 
-        des_speed = 20
+        des_speed = self.dog.speed
 
         # TODO: Send REBOOT command
         # self.controller.button_y.when_pressed = self.reboot
         
         while self.mode == self.MODE_STATIONARY:
-            #des_x = -80*self.controller.axis_r.x
             des_x = -80*self.axis_r['x']
             
             if not self.controller.button_trigger_r.is_pressed:
-                #des_y = 40*-self.controller.axis_r.y
                 des_y = 40*-self.axis_r['y']
             else:
-                #des_z -= 30*self.controller.axis_r.y
-                des_z -= 30*-self.axis_r['y']
+                des_z += 10*-self.axis_r['y']
 
 
             # TODO: Make these constants
@@ -222,17 +255,14 @@ class XboxControl:
             elif des_z < 30:
                 des_z = 30
 
-            #des_pitch = -20*self.controller.axis_l.y
             des_pitch = -20*self.axis_l['y']
 
             if not self.controller.button_trigger_l.is_pressed:
-                #des_roll = 30*self.controller.axis_l.x
                 des_roll = 30*self.axis_l['x']
             else:
-                des_yaw += 2*self.controller.axis_l.x
-                des_yaw += 2*self.axis_l['x']
+                des_yaw += 20*self.axis_l['x']
 
-            print("{:3.0f} {:3.0f} {:3.0f} {:3.0f} {:3.0f} {:3.0f}".format(des_x, des_y, des_z, des_roll, des_pitch, des_yaw))
+            # print("{:3.0f} {:3.0f} {:3.0f} {:3.0f} {:3.0f} {:3.0f}".format(des_x, des_y, des_z, des_roll, des_pitch, des_yaw))
 
             try:
                 # Absolute move command:
@@ -253,9 +283,9 @@ class XboxControl:
                 des_yaw = 0
 
 
-# if __name__ == '__main__':
-#     os.system('sudo chmod 666 /sys/class/leds/xpad0/brightness')
-#     controller = Xbox360Controller(0, axis_threshold=0.2)
-#     while True:
-#         print("{:3.5f} {:3.5f}".format(controller.axis_r.x,controller.axis_r.y))
-#         time.sleep(.1)
+if __name__ == '__main__':
+    os.system('sudo chmod 666 /sys/class/leds/xpad0/brightness')
+    controller = Xbox360Controller(0, axis_threshold=0.2)
+    while True:
+        print("{:3.5f} {:3.5f}".format(controller.hat.x,controller.hat.y))
+        time.sleep(.1)

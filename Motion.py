@@ -138,6 +138,7 @@ class Motion:
         for leg in self.dog.legs:
             if not leg.desired_done:
                 leg.go_desired()
+                print("Moving Legs")
         
         if self.current_motion != self.STATIONARY:
 
@@ -153,7 +154,13 @@ class Motion:
                 if self.current_motion == self.WALK:
                     self.do_walk(self.direction)
             elif self.steps_remaining == 0:
-                self.stop_walk()
+                self.stop_walk()   
+
+        # If we have a desired leg position that has not yet been handled
+        for leg in self.dog.legs:
+            if not leg.desired_done:
+                leg.go_desired()
+                print("Moving Legs")
 
             
 

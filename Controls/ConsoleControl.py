@@ -34,6 +34,12 @@ class ConsoleControl:
         elif response_tokens[0] == 'sleep':
             return Command(command = "sleep_async", args = None)
 
+        elif response_tokens[0] == 'reboot':
+            return Command(command = 'reboot', args = None)
+
+        elif response_tokens[0] == 'xbox':
+            return Command(command = 'toggle_xbox', args = None)
+
         elif response_tokens[0] == 'res':
             return Command(command = "print_resource_usage", args = None)
 
@@ -45,6 +51,9 @@ class ConsoleControl:
 
         elif response_tokens[0] == 'R':
             return Command(command = "relative_move", args = response_tokens[1:])
+
+        elif response_tokens[0] == 'speed':
+             return Command(command = "speed", args = response_tokens[1:])
 
         elif response_tokens[0] == 'pos':
             print("Position: {: 3.0f}  {: 3.0f}  {: 3.0f}  {: 3.0f} {: 3.0f} {: 3.0f} {: 3.0f}".format(self.dog.x, self.dog.y, self.dog.z, self.dog.roll, self.dog.pitch, self.dog.yaw, self.dog.speed))

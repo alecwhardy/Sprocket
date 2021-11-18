@@ -88,6 +88,8 @@ class Crude_Gait:
             "OUT_DOWN_L"   : (-step_len,         0,             cur_z, playtime)
         }
 
+        print("Set positions: {} {} {}".format(step_len, lift_amount, playtime))
+
 
     def manual_set_positions(self, set_positions):
         """ Manually specify the set_positions table with raw values
@@ -164,6 +166,8 @@ class Crude_Gait:
         dog.motion.request_absolute_leg(Leg.FL, *set_positions["DOWN"])
         dog.motion.request_delay(sleeptime)
 
+        print("Standing Still")
+
         # dog.legs[RR].go_position(*set_positions["DOWN"])
         # dog.legs[RF].go_position(*set_positions["DOWN"])
         # dog.legs[LR].go_position(*set_positions["DOWN"])
@@ -202,6 +206,8 @@ class Crude_Gait:
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["FORWARD_UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["BACK_DOWN_L"])
             dog.motion.request_delay(sleeptime)
+
+        print("Step Foreward {}".format(self.state))
             
 
     def _crude_step_backward(self, dog, set_positions, sleeptime):
