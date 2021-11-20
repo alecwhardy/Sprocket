@@ -134,7 +134,6 @@ class Commands:
 
     def walk(self, args = None):
 
-
         if args is None or len(args) == 0:
             direction = 'f'
         else:
@@ -166,6 +165,15 @@ class Commands:
 
     def stop(self):
         self.dog.motion.stop_walk()
+
+    def start_dataplot(self):
+        self.dog.dataplot.start_recording()
+
+    def stop_dataplot(self):
+        self.dog.dataplot.stop_recording()
+
+    def show_dataplot(self):
+        self.dog.dataplot.show_plot()
 
     def down(self):
         pass

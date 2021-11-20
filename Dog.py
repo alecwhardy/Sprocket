@@ -3,6 +3,8 @@ from Leg import Leg
 import time
 from CommandHandler import CommandHandler
 from Motion import Motion
+from IMU import IMU
+from DataPlot import DataPlot
 
 class Dog:
     """ Contains all of the necessary code to determine the current state of the dog.  All behavior is handled by the Behavior class
@@ -39,6 +41,8 @@ class Dog:
         self.legs = legs
         self.command_handler = CommandHandler(self)
         self.motion = Motion(self)
+        self.imu = IMU()
+        self.dataplot = DataPlot()
 
 
     def get_voltage(self):
@@ -145,8 +149,11 @@ class Dog:
             self.command_handler.handle_commands()
 
             # update sensors
+            latest_accel_rss = self.imu.get_linear_rss()
+            self.dataplot.record_loop(latest_accel_rss)
+
             
             # update motion
             self.motion.update_motion()
 
-            time.sleep(0)
+            time.sleep(0.001)

@@ -24,6 +24,7 @@ class Motion:
 
     motion_delay = False
     motion_delay_time = 0
+    last_motion = 0
 
     # The current positions are part of dog.x, dog.y, etc...
 
@@ -92,11 +93,12 @@ class Motion:
     def stop_walk(self):
         # Call this function when we are done walking so we reset back to a neutral position
 
-        step_len = 30
-        lift_amount = 50
-        playtime = 12
-        
-        self.walk.gait.update_set_positions(self.dog, step_len, lift_amount, playtime)
+
+        # TODO: DELETE THIS!!
+        avg = sum(self.dog.dataplot.recorded_data) / len(self.dog.dataplot.recorded_data)
+        print("Average linear acceleration: {}".format(avg))
+        self.dog.dataplot.stop_recording()
+
         self.walk.walk(Walk.STILL)
         self.walk.reset()
         self.steps_remaining = 0
@@ -108,6 +110,8 @@ class Motion:
         self.stop_walk()
 
     def do_prance(self):
+
+        self.last_motion = time.time()
 
         self.current_motion = self.PRANCE
 
@@ -126,6 +130,8 @@ class Motion:
 
         """
 
+        self.last_motion = time.time()
+
         self.current_motion = self.WALK
         self.direction = direction
 
@@ -138,14 +144,22 @@ class Motion:
         for leg in self.dog.legs:
             if not leg.desired_done:
                 leg.go_desired()
-                print("Moving Legs")
+                # print("Moving Legs")
         
         if self.current_motion != self.STATIONARY:
 
             # if we have a delay request, handle that
             if self.motion_delay:
-                time.sleep(self.motion_delay_time)
-                self.motion_delay = False
+
+                if self.last_motion + self.motion_delay_time >= time.time():
+                    # Not ready to do movement
+                    return
+                else:
+                    self.last_motion = time.time()
+                    self.motion_delay = False
+
+                # time.sleep(0.000000001)
+                
 
             # If we have remaining steps left, do them
             if self.steps_remaining != 0:
@@ -156,11 +170,11 @@ class Motion:
             elif self.steps_remaining == 0:
                 self.stop_walk()   
 
-        # If we have a desired leg position that has not yet been handled
+        # Go to the new desired leg positions
         for leg in self.dog.legs:
             if not leg.desired_done:
                 leg.go_desired()
-                print("Moving Legs")
+                # print("Moving Legs")
 
             
 

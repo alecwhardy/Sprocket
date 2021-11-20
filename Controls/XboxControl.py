@@ -13,6 +13,8 @@ from Motion import Motion
 
 class XboxControl:
 
+    CONNECTED = True
+
     MODE_STATIONARY = 1
     MODE_WALK = 2
 
@@ -40,7 +42,11 @@ class XboxControl:
 
         os.system('sudo chmod 666 /sys/class/leds/xpad0/brightness')
 
-        self.controller = Xbox360Controller(controller_id, axis_threshold=axis_threshold)
+        try:
+            self.controller = Xbox360Controller(controller_id, axis_threshold=axis_threshold)
+        except Exception:
+            self.CONNECTED = False
+            return
 
         self.controller.button_mode.when_pressed = self.changeMode
         self.update_mode_led()
@@ -94,12 +100,13 @@ class XboxControl:
             # Do a time.sleep(0) to let the xbox controller driver thread run so we actually get updated positions
             time.sleep(0)
             return None
+        self.last_update = cur_millis
 
         # Update internal axes
         self.update_axes()
         
         if self.mode == self.MODE_STATIONARY:
-            self.last_update = cur_millis
+            
             # commands_stationary will always only give a single command, so add it to a list with only its one command
             return [self.commands_stationary()]
         
@@ -108,36 +115,53 @@ class XboxControl:
 
     def commands_walk(self):
 
+        MIN_PLAYTIME_WALK = 5
+        MIN_PLAYTIME_TURN = 8
+        MAX_PLAYTIME = 50
+
         command_queue = deque()
 
-        step_len = 50
-        lift_amount = 50
-        playtime = 20
+        lift_amount = 90
+        playtime = 50
 
-        des_wf_speed = int(-100*self.axis_r['y'])
+        des_walk_speed = int(-100*self.axis_r['y'])
         des_turn_speed = int(100*self.axis_r['x'])
-        wf_playtime = 10
 
         step_len = int(-100*self.axis_r['y'])
         # wturn_playtime = int(lin_interp(100, abs(des_turn_speed), 0, MIN_PLAYTIME_TURN, MAX_PLAYTIME))
+        wturn_playtime = 10
 
         if step_len > 100:
             lift_amount += step_len//5
 
         # Walk forward
-        if des_wf_speed > 10:
+        if des_walk_speed > 10:
             
-            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime)))
-
-            # Apply correction factor to "BACK_DOWN_L"
+            # TODO: Apply correction factor to "BACK_DOWN_L"
             # old = walk.set_positions["BACK_DOWN_L"]
             # corrected_position = (old[0], 1.3*old[1], old[2], old[3])
             # walk.set_positions["BACK_DOWN_L"] = corrected_position
-
+            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime)))
             if not self.dog.motion.current_motion == Motion.WALK:
-                command_queue.append(Command(command = 'walk', args=('f')))
+                command_queue.append(Command(command = 'walk', args=['f']))
 
-            # print("{} {} {}".format(step_len, lift_amount, playtime))
+        elif des_walk_speed < -10:
+            step_len = -step_len
+            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime)))
+            if not self.dog.motion.current_motion == Motion.WALK:
+                command_queue.append(Command(command = 'walk', args=['b']))
+
+        elif des_turn_speed > 10:
+            step_len = 30
+            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, wturn_playtime)))
+            if not self.dog.motion.current_motion == Motion.WALK:
+                command_queue.append(Command(command = 'walk', args=['tr']))
+        
+        elif des_turn_speed < -10:
+            step_len = 30
+            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, wturn_playtime)))
+            if not self.dog.motion.current_motion == Motion.WALK:
+                command_queue.append(Command(command = 'walk', args=['tl']))
 
         # Stop walking
         else:

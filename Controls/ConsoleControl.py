@@ -26,6 +26,9 @@ class ConsoleControl:
             return Command(command = "reset_position", args = None)
 
         elif response_tokens[0] == 'stop':
+            # self.dog.dataplot.stop_recording()
+            # avg = sum(self.dog.dataplot.recorded_data) / len(self.dog.dataplot.recorded_data)
+            # print("Average linear acceleration: {}".format(avg))
             return Command(command = "stop", args = None)
         
         elif response_tokens[0] == 'die':
@@ -62,10 +65,20 @@ class ConsoleControl:
             return Command(command = "absolute_leg_move", args = response_tokens[1:])
 
         elif response_tokens[0] == 'walk':
+            self.dog.dataplot.start_recording(10)
             return Command(command = "walk", args = response_tokens[1:])
 
         elif response_tokens[0] == 'walk_p':
             return Command(command = "walk_params", args = response_tokens[1:])
+
+        elif response_tokens[0] == 'record':
+            return Command(command = "start_dataplot", args = None)
+
+        elif response_tokens[0] == 'stop_record':
+            return Command(command = "stop_dataplot", args = None)
+
+        elif response_tokens[0] == 'show_record':
+            return Command(command = "show_dataplot", args = None)
 
         elif response_tokens[0] == 'prance':
             
