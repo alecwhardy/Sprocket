@@ -56,6 +56,15 @@ class Crude_Gait:
         """
         self.crude_walk(dog, direction)
 
+    # This will ultimately be "get variable"
+    def get_set_position(self, position):
+        return self.set_positions[position]
+
+    # This will ultimately be "update variable"
+    def update_set_position(self, position, values):
+        self.set_positions[position] = values
+
+    # This will ultimately be "update_variables"
     def update_set_positions(self, dog, step_len, lift_amount, playtime):
         """ Automatically calculate the set_positions table from the provided arguments.  Use dog for cur_z value.
 
@@ -126,7 +135,14 @@ class Crude_Gait:
         # Override the set_positions dictionary entries for UP, DOWN, IN, etc. here
         # Do something like set_positions["IN"] = (X, Y, Z, speed)
         if direction == self.FORWARD:
-            self._crude_step_forward(dog, self.set_positions, sleeptime)
+            forward_set_positions = self.set_positions.copy()
+            
+            # Fix the left turning
+            old = forward_set_positions["BACK_DOWN_L"]
+            corrected_position = (old[0], int(1.18*old[1]), old[2], old[3])
+            forward_set_positions["BACK_DOWN_L"] = corrected_position
+
+            self._crude_step_forward(dog, forward_set_positions, sleeptime)
 
         if direction == self.BACKWARD:
             self._crude_step_backward(dog, self.set_positions, sleeptime)

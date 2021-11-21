@@ -95,9 +95,8 @@ class Motion:
 
 
         # TODO: DELETE THIS!!
-        avg = sum(self.dog.dataplot.recorded_data) / len(self.dog.dataplot.recorded_data)
-        print("Average linear acceleration: {}".format(avg))
         self.dog.dataplot.stop_recording()
+        self.dog.dataplot.print_average_filtered()
 
         self.walk.walk(Walk.STILL)
         self.walk.reset()

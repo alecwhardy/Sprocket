@@ -234,6 +234,7 @@ class Leg:
             theta_thigh = (theta_knee/2)-theta_thigh_offset
 
         except ValueError:
+            print("Math error trying to move to: {}, {}, {}".format(X, Y, Z))
             return False
 
         self.calc_theta_shoulder = theta_shoulder

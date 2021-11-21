@@ -149,8 +149,8 @@ class Dog:
             self.command_handler.handle_commands()
 
             # update sensors
-            latest_accel_rss = self.imu.get_linear_rss()
-            self.dataplot.record_loop(latest_accel_rss)
+            latest_rss = self.imu.get_gyro_rss()
+            self.dataplot.record_loop(latest_rss)
 
             
             # update motion

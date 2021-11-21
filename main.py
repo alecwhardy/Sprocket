@@ -1,6 +1,4 @@
-import os, psutil
 import serial
-import time
 from Behavior import Behavior
 from XYZrobotServo import XYZrobotServo
 from Leg import Leg
@@ -40,7 +38,3 @@ if __name__ == '__main__':
 
     dog.wake_up()
     dog.live(verbose = True)
-
-    # xbox_controller = XboxControl(dog, 0)
-    # while True:
-    #     xbox_controller.behave()
