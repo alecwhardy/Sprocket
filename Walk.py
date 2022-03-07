@@ -75,26 +75,27 @@ class Crude_Gait:
             playtime ([type]): [description]
         """
         cur_z = dog.z
+        y_offset = dog.motion.desired_y
 
         # Tuples of UP, DOWN, FRONT, BACK XYZ coordinates
         # We can now unpack the tuple and use it as arguments with the * operator
         # for example: dog.legs[RR].go_position(*set_positions["FRONT"])
         self.set_positions = {
-            "UP"           : (        0,         0, cur_z-lift_amount, playtime), 
-            "DOWN"         : (        0,         0,             cur_z, playtime), 
-            "FORWARD_UP"   : (        0, -step_len, cur_z-lift_amount, playtime),
-            "FORWARD_DOWN" : (        0, -step_len,             cur_z, playtime), 
-            "BACK_DOWN_L"  : (        0,  step_len,             cur_z, playtime),
-            "BACK_DOWN_R"  : (        0,  step_len,             cur_z, playtime),
-            "BACK_UP"      : (        0,  step_len, cur_z-lift_amount, playtime), 
-            "IN_UP_R"      : (-step_len,         0, cur_z-lift_amount, playtime),
-            "IN_UP_L"      : ( step_len,         0, cur_z-lift_amount, playtime),
-            "IN_DOWN_L"    : ( step_len,         0,             cur_z, playtime),
-            "IN_DOWN_R"    : (-step_len,         0,             cur_z, playtime),
-            "OUT_UP_R"     : ( step_len,         0, cur_z-lift_amount, playtime), 
-            "OUT_UP_L"     : (-step_len,         0, cur_z-lift_amount, playtime), 
-            "OUT_DOWN_R"   : ( step_len,         0,             cur_z, playtime), 
-            "OUT_DOWN_L"   : (-step_len,         0,             cur_z, playtime)
+            "UP"           : (        0,         0+y_offset, cur_z-lift_amount, playtime), 
+            "DOWN"         : (        0,         0+y_offset,             cur_z, playtime), 
+            "FORWARD_UP"   : (        0, -step_len+y_offset, cur_z-lift_amount, playtime),
+            "FORWARD_DOWN" : (        0, -step_len+y_offset,             cur_z, playtime), 
+            "BACK_DOWN_L"  : (        0,  step_len+y_offset,             cur_z, playtime),
+            "BACK_DOWN_R"  : (        0,  step_len+y_offset,             cur_z, playtime),
+            "BACK_UP"      : (        0,  step_len+y_offset, cur_z-lift_amount, playtime), 
+            "IN_UP_R"      : (-step_len,         0+y_offset, cur_z-lift_amount, playtime),
+            "IN_UP_L"      : ( step_len,         0+y_offset, cur_z-lift_amount, playtime),
+            "IN_DOWN_L"    : ( step_len,         0+y_offset,             cur_z, playtime),
+            "IN_DOWN_R"    : (-step_len,         0+y_offset,             cur_z, playtime),
+            "OUT_UP_R"     : ( step_len,         0+y_offset, cur_z-lift_amount, playtime), 
+            "OUT_UP_L"     : (-step_len,         0+y_offset, cur_z-lift_amount, playtime), 
+            "OUT_DOWN_R"   : ( step_len,         0+y_offset,             cur_z, playtime), 
+            "OUT_DOWN_L"   : (-step_len,         0+y_offset,             cur_z, playtime)
         }
 
 
@@ -137,9 +138,9 @@ class Crude_Gait:
         if direction == self.FORWARD:
             forward_set_positions = self.set_positions.copy()
             
-            # Fix the left turning
+            # Apply an offset to correct robot turning slightly while walking forward
             old = forward_set_positions["BACK_DOWN_L"]
-            corrected_position = (old[0], int(1.18*old[1]), old[2], old[3])
+            corrected_position = (old[0], int(1.05*old[1]), old[2], old[3])
             forward_set_positions["BACK_DOWN_L"] = corrected_position
 
             self._crude_step_forward(dog, forward_set_positions, sleeptime)

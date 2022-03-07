@@ -35,12 +35,14 @@ class DataPlot:
 
     def stop_recording(self):
         self.recording = False
-        l = np.array(self.recorded_data)
-        self.recorded_data = l[(l>np.quantile(l,0.1)) & (l<np.quantile(l,0.9))].tolist()
+        if len(self.recorded_data) > 1:
+            l = np.array(self.recorded_data)
+            self.recorded_data = l[(l>np.quantile(l,0.1)) & (l<np.quantile(l,0.9))].tolist()
 
     def print_average_filtered(self):
-        avg = sum(self.recorded_data) / len(self.recorded_data)
-        print("Performance: {}".format(avg))
+        if len(self.recorded_data) > 1:
+            avg = sum(self.recorded_data) / len(self.recorded_data)
+            print("Performance: {}".format(avg))
 
     def show_plot(self):
         plt.clf()

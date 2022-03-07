@@ -157,3 +157,5 @@ class Dog:
             self.motion.update_motion()
 
             time.sleep(0.001)
+
+            #print(self.legs[0].servos[1].readStatus().pwm)

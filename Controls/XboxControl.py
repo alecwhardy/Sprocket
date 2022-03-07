@@ -121,26 +121,29 @@ class XboxControl:
 
         command_queue = deque()
 
-        lift_amount = 90
-        playtime = 50
+        lift_amount = 51
+        playtime = 13
 
         des_walk_speed = int(-100*self.axis_r['y'])
         des_turn_speed = int(100*self.axis_r['x'])
 
-        step_len = int(-100*self.axis_r['y'])
+        step_len = int(-70*self.axis_r['y'])
         # wturn_playtime = int(lin_interp(100, abs(des_turn_speed), 0, MIN_PLAYTIME_TURN, MAX_PLAYTIME))
-        wturn_playtime = 10
+        wturn_playtime = 13
 
         if step_len > 100:
             lift_amount += step_len//5
 
+         # Clear the y-offset (set below) so the robot leans forward (so the knees don't hit the ground)
+         # TODO: Move this to a better spot!
+        self.dog.motion.desired_y = 0
+
         # Walk forward
         if des_walk_speed > 10:
-            
-            # TODO: Apply correction factor to "BACK_DOWN_L"
-            # old = walk.set_positions["BACK_DOWN_L"]
-            # corrected_position = (old[0], 1.3*old[1], old[2], old[3])
-            # walk.set_positions["BACK_DOWN_L"] = corrected_position
+        
+            # The offset to keep the robot straight is applied in the Walk gait now
+            # Let's apply the y-offset here so the robot leans forward (so the knees don't hit the ground)
+            self.dog.motion.desired_y = 30
             command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime)))
             if not self.dog.motion.current_motion == Motion.WALK:
                 command_queue.append(Command(command = 'walk', args=['f']))
