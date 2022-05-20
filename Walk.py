@@ -44,6 +44,8 @@ class Crude_Gait:
     state = 1
     direction = STILL
 
+    compass_dir = None
+
     def reset(self):
         self.state = 1
     
@@ -56,6 +58,14 @@ class Crude_Gait:
         """
         self.crude_walk(dog, direction)
 
+        # Update the compass dur if it isn't set
+        if direction == self.STILL:
+            self.compass_dir = None
+        elif self.compass_dir is None and direction == self.FORWARD:
+            # We are not still but the compass dir is None, so we must be starting a new walk
+            # Record the compass direction so we can auto-trim to maintain it.
+            self.compass_dir = dog.sensor_yaw
+
     # This will ultimately be "get variable"
     def get_set_position(self, position):
         return self.set_positions[position]
@@ -65,8 +75,10 @@ class Crude_Gait:
         self.set_positions[position] = values
 
     # This will ultimately be "update_variables"
-    def update_set_positions(self, dog, step_len, lift_amount, playtime):
+    def update_set_positions(self, dog, step_len, lift_amount, playtime, r_trim = 0, f_trim=0):
         """ Automatically calculate the set_positions table from the provided arguments.  Use dog for cur_z value.
+
+        f_trim: extra lift for front UP movements.  Make this positive? if the back lifts more
 
         Args:
             dog ([type]): [description]
@@ -81,21 +93,24 @@ class Crude_Gait:
         # We can now unpack the tuple and use it as arguments with the * operator
         # for example: dog.legs[RR].go_position(*set_positions["FRONT"])
         self.set_positions = {
-            "UP"           : (        0,         0+y_offset, cur_z-lift_amount, playtime), 
-            "DOWN"         : (        0,         0+y_offset,             cur_z, playtime), 
-            "FORWARD_UP"   : (        0, -step_len+y_offset, cur_z-lift_amount, playtime),
-            "FORWARD_DOWN" : (        0, -step_len+y_offset,             cur_z, playtime), 
-            "BACK_DOWN_L"  : (        0,  step_len+y_offset,             cur_z, playtime),
-            "BACK_DOWN_R"  : (        0,  step_len+y_offset,             cur_z, playtime),
-            "BACK_UP"      : (        0,  step_len+y_offset, cur_z-lift_amount, playtime), 
-            "IN_UP_R"      : (-step_len,         0+y_offset, cur_z-lift_amount, playtime),
-            "IN_UP_L"      : ( step_len,         0+y_offset, cur_z-lift_amount, playtime),
-            "IN_DOWN_L"    : ( step_len,         0+y_offset,             cur_z, playtime),
-            "IN_DOWN_R"    : (-step_len,         0+y_offset,             cur_z, playtime),
-            "OUT_UP_R"     : ( step_len,         0+y_offset, cur_z-lift_amount, playtime), 
-            "OUT_UP_L"     : (-step_len,         0+y_offset, cur_z-lift_amount, playtime), 
-            "OUT_DOWN_R"   : ( step_len,         0+y_offset,             cur_z, playtime), 
-            "OUT_DOWN_L"   : (-step_len,         0+y_offset,             cur_z, playtime)
+            "UP"           : (        0,         0+y_offset       , cur_z-lift_amount       , playtime),
+            "UP_F"         : (        0,         0+y_offset       , cur_z-lift_amount-f_trim, playtime),  # Front
+            "DOWN"         : (        0,         0+y_offset       ,             cur_z       , playtime), 
+            "FORWARD_UP"   : (        0, -step_len+y_offset       , cur_z-lift_amount       , playtime),
+            "FORWARD_UP_F" : (        0, -step_len+y_offset       , cur_z-lift_amount       , playtime),  # Front
+            "FORWARD_DOWN" : (        0, -step_len+y_offset       ,             cur_z       , playtime), 
+            "BACK_DOWN_L"  : (        0,  step_len+y_offset       ,             cur_z       , playtime),
+            "BACK_DOWN_R"  : (        0,  step_len+y_offset+r_trim,             cur_z       , playtime),
+            "BACK_UP"      : (        0,  step_len+y_offset       , cur_z-lift_amount       , playtime), 
+            "BACK_UP_F"    : (        0,  step_len+y_offset       , cur_z-lift_amount       , playtime),  # Front
+            "IN_UP_R"      : (-step_len,         0+y_offset       , cur_z-lift_amount       , playtime),
+            "IN_UP_L"      : ( step_len,         0+y_offset       , cur_z-lift_amount       , playtime),
+            "IN_DOWN_L"    : ( step_len,         0+y_offset       ,             cur_z       , playtime),
+            "IN_DOWN_R"    : (-step_len,         0+y_offset       ,             cur_z       , playtime),
+            "OUT_UP_R"     : ( step_len,         0+y_offset       , cur_z-lift_amount       , playtime), 
+            "OUT_UP_L"     : (-step_len,         0+y_offset       , cur_z-lift_amount       , playtime), 
+            "OUT_DOWN_R"   : ( step_len,         0+y_offset       ,             cur_z       , playtime), 
+            "OUT_DOWN_L"   : (-step_len,         0+y_offset       ,             cur_z       , playtime)
         }
 
 
@@ -136,6 +151,7 @@ class Crude_Gait:
         # Override the set_positions dictionary entries for UP, DOWN, IN, etc. here
         # Do something like set_positions["IN"] = (X, Y, Z, speed)
         if direction == self.FORWARD:
+            '''
             forward_set_positions = self.set_positions.copy()
             
             # Apply an offset to correct robot turning slightly while walking forward
@@ -143,7 +159,10 @@ class Crude_Gait:
             corrected_position = (old[0], int(1.05*old[1]), old[2], old[3])
             forward_set_positions["BACK_DOWN_L"] = corrected_position
 
-            self._crude_step_forward(dog, forward_set_positions, sleeptime)
+             self._crude_step_forward(dog, forward_set_positions, sleeptime)
+            '''
+
+            self._crude_step_forward(dog, self.set_positions, sleeptime)
 
         if direction == self.BACKWARD:
             self._crude_step_backward(dog, self.set_positions, sleeptime)
@@ -195,27 +214,27 @@ class Crude_Gait:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FR, *set_positions["DOWN"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP_F"])
             dog.motion.request_delay(sleeptime)
 
         if self.state == 2:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["FORWARD_UP"])
             dog.motion.request_absolute_leg(Leg.FR, *set_positions["BACK_DOWN_R"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["BACK_DOWN_L"])
-            dog.motion.request_absolute_leg(Leg.FL, *set_positions["FORWARD_UP"])
+            dog.motion.request_absolute_leg(Leg.FL, *set_positions["FORWARD_UP_F"])
             dog.motion.request_delay(sleeptime)
 
         if self.state == 3:
             #  RR leg DOWN       RF leg UP         LR leg UP              LF leg DOWN
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP_F"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["DOWN"])
             dog.motion.request_delay(sleeptime)
 
         if self.state == 4:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["BACK_DOWN_R"])
-            dog.motion.request_absolute_leg(Leg.FR, *set_positions["FORWARD_UP"])
+            dog.motion.request_absolute_leg(Leg.FR, *set_positions["FORWARD_UP_F"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["FORWARD_UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["BACK_DOWN_L"])
             dog.motion.request_delay(sleeptime)
@@ -228,7 +247,7 @@ class Crude_Gait:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FR, *set_positions["DOWN"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP_F"])
             dog.motion.request_delay(sleeptime)
 
         if self.state == 2:
@@ -236,13 +255,13 @@ class Crude_Gait:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["BACK_UP"])
             dog.motion.request_absolute_leg(Leg.FR, *set_positions["FORWARD_DOWN"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["FORWARD_DOWN"])
-            dog.motion.request_absolute_leg(Leg.FL, *set_positions["BACK_UP"])
+            dog.motion.request_absolute_leg(Leg.FL, *set_positions["BACK_UP_F"])
             dog.motion.request_delay(sleeptime)
 
         if self.state == 3:
             #  RR leg DOWN       RF leg UP         LR leg UP              LF leg DOWN
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP_F"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["DOWN"])
             dog.motion.request_delay(sleeptime)
@@ -250,7 +269,7 @@ class Crude_Gait:
         if self.state == 4:
             #  RR leg BACK       RF leg FRONT      LR leg FRONT           LF leg BACK
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["FORWARD_DOWN"])
-            dog.motion.request_absolute_leg(Leg.FR, *set_positions["BACK_UP"])
+            dog.motion.request_absolute_leg(Leg.FR, *set_positions["BACK_UP_F"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["BACK_UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["FORWARD_DOWN"])
             dog.motion.request_delay(sleeptime)
@@ -262,7 +281,7 @@ class Crude_Gait:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FR, *set_positions["DOWN"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP_F"])
             dog.motion.request_delay(sleeptime)
         
         if self.state == 2:
@@ -276,7 +295,7 @@ class Crude_Gait:
         if self.state == 3:
             #  RR leg DOWN       RF leg UP         LR leg UP              LF leg DOWN 
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP_F"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["DOWN"])
             dog.motion.request_delay(sleeptime)
@@ -295,7 +314,7 @@ class Crude_Gait:
         if self.state == 1:
             #  RR leg DOWN       RF leg UP         LR leg UP              LF leg DOWN
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP_F"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["DOWN"])
             dog.motion.request_delay(sleeptime)
@@ -313,7 +332,7 @@ class Crude_Gait:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FR, *set_positions["DOWN"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP_F"])
             dog.motion.request_delay(sleeptime)
 
         if self.state == 4:
@@ -332,7 +351,7 @@ class Crude_Gait:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FR, *set_positions["DOWN"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP_F"])
             dog.motion.request_delay(sleeptime)
         
         if self.state == 2:
@@ -346,7 +365,7 @@ class Crude_Gait:
         if self.state == 3:
             #  RR leg DOWN       RF leg UP         LR leg UP              LF leg DOWN 
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP_F"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["DOWN"])
             dog.motion.request_delay(sleeptime)
@@ -367,7 +386,7 @@ class Crude_Gait:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FR, *set_positions["DOWN"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP_F"])
             dog.motion.request_delay(sleeptime)
         
         if self.state == 2:
@@ -382,7 +401,7 @@ class Crude_Gait:
         if self.state == 3:
             #  RR leg DOWN       RF leg UP         LR leg UP            LF leg DOWN 
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP_F"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["DOWN"])
             dog.motion.request_delay(sleeptime)
@@ -401,7 +420,7 @@ class Crude_Gait:
         if self.state == 1:
             #  RR leg DOWN       RF leg UP         LR leg UP              LF leg DOWN
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FR, *set_positions["UP_F"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FL, *set_positions["DOWN"])
             dog.motion.request_delay(sleeptime)
@@ -420,7 +439,7 @@ class Crude_Gait:
             dog.motion.request_absolute_leg(Leg.RR, *set_positions["UP"])
             dog.motion.request_absolute_leg(Leg.FR, *set_positions["DOWN"])
             dog.motion.request_absolute_leg(Leg.RL, *set_positions["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP"])
+            dog.motion.request_absolute_leg(Leg.FL, *set_positions["UP_F"])
             dog.motion.request_delay(sleeptime)
         
         if self.state == 4:

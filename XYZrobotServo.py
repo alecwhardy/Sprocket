@@ -74,6 +74,11 @@ class XYZrobotServo:
 			self.position = raw[4]
 			self.iBus = raw[5]
 
+		def __repr__(self):
+
+			resp = "PWM: " + str(self.pwm) + "\nP_R: " + str(self.posRef) + "\nPos: " + str(self.position) + "\n"
+			return resp
+
 
 	def __init__(self, stream, id, debug = False):
 		self.stream = stream
@@ -312,10 +317,24 @@ class XYZrobotServo:
 		return ret_data
 
 	def torqueOff(self):
-  		self.sendIJog(0, self.SET_TORQUE_OFF, 0)
+		self.sendIJog(0, self.SET_TORQUE_OFF, 0)
 
 	def reboot(self):
 		self.sendRequest(self.CMD_REBOOT, None)
 
 	def getVoltage(self):
 		return int(self.RAMRead(54, 1)[0])/16
+
+
+if __name__ == "__main__":
+	import serial, time
+	
+	ser = serial.Serial('/dev/ttyS0', baudrate = 115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
+	i = 0 # motor number
+	leg_servo = XYZrobotServo(ser, i+1, debug=False)
+	while True:
+		status = leg_servo.readStatus()
+		print(status)
+		time.sleep(0.01)
+
+

@@ -45,14 +45,13 @@ class Motion:
         if self.current_motion == self.STATIONARY:
             self.dog.go_position(x, y, z, roll, pitch, yaw, speed)
 
-        else:
-            # TODO: If we are walking or prancing, update desired_* variables so that the walking algorithm takes into consideration the desired offsets.
-            self.dog.x = x
-            self.dog.y = y
-            self.dog.z = z
-            self.dog.roll = roll
-            self.dog.pitch = pitch
-            self.dog.yaw = yaw
+        # Do we want to update desired_* here?
+        self.dog.x     = self.desired_x = x
+        self.dog.y     = self.desired_y = y
+        self.dog.z     = self.desired_z = z
+        self.dog.roll  = self.desired_roll = roll
+        self.dog.pitch = self.desired_pitch = pitch
+        self.dog.yaw   = self.desired_yaw = yaw
     
     def request_relative_position(self, x, y, z, roll, pitch, yaw, speed):
 
@@ -67,15 +66,14 @@ class Motion:
         if self.current_motion == self.STATIONARY:
             self.dog.go_position(new_x, new_y, new_z, new_roll, new_pitch, new_yaw, new_speed)
 
-        else:
-            # TODO: If we are walking or prancing, update desired_* variables so that the walking algorithm takes into consideration the desired offsets.
-            self.dog.x = new_x
-            self.dog.y = new_y
-            self.dog.z = new_z
-            self.dog.roll = new_roll
-            self.dog.pitch = new_pitch
-            self.dog.yaw = new_yaw
-            self.dog.speed = new_speed
+        # TODO: If we are walking or prancing, update desired_* variables so that the walking algorithm takes into consideration the desired offsets.
+        self.dog.x     = self.desired_x = new_x
+        self.dog.y     = self.desired_y = new_y
+        self.dog.z     = self.desired_z = new_z
+        self.dog.roll  = self.desired_roll = new_roll
+        self.dog.pitch = self.desired_pitch = new_pitch
+        self.dog.yaw   = self.desired_yaw = new_yaw
+        self.dog.speed = self.desired_speed = new_speed
 
     def request_absolute_leg(self, leg, x, y, z, speed):
         if self.current_motion == self.STATIONARY:
@@ -143,7 +141,6 @@ class Motion:
         for leg in self.dog.legs:
             if not leg.desired_done:
                 leg.go_desired()
-                # print("Moving Legs")
         
         if self.current_motion != self.STATIONARY:
 
@@ -156,9 +153,6 @@ class Motion:
                 else:
                     self.last_motion = time.time()
                     self.motion_delay = False
-
-                # time.sleep(0.000000001)
-                
 
             # If we have remaining steps left, do them
             if self.steps_remaining != 0:
@@ -173,7 +167,6 @@ class Motion:
         for leg in self.dog.legs:
             if not leg.desired_done:
                 leg.go_desired()
-                # print("Moving Legs")
 
             
 

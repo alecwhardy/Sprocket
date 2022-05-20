@@ -32,11 +32,7 @@ class XboxControl:
         'y' : 0
     }
 
-    do_sleep = False
-    do_reboot = False
-    do_reset_position = False
-
-    def __init__(self, dog, controller_id = 0, axis_threshold = 0.1):
+    def __init__(self, dog, controller_id = 0, axis_threshold = 0.2):
 
         self.dog = dog
 
@@ -53,21 +49,9 @@ class XboxControl:
             return
 
         self.controller.button_mode.when_pressed = self.changeMode
-        self.controller.button_select.when_pressed = self.button_select  # Back button, do servo reset
-        self.controller.button_start.when_pressed = self.button_start    # Start button, do sleep
-        self.controller.button_a.when_pressed = self.button_a            # A button, do reset position
         self.update_mode_led()
 
         self.last_update = millis()
-
-    def button_select(self, button):
-        self.do_reboot = True
-    
-    def button_start(self, button):
-        self.do_sleep = True
-
-    def button_a(self, button):
-        self.do_reset_position = True
 
     def update_axes(self):
         """ Updates the axis positions, taking into account the axis_threshold
@@ -89,7 +73,7 @@ class XboxControl:
 
     def changeMode(self, button):
         self.mode += 1
-        if self.mode > 2:
+        if self.mode > 4:
             self.mode = 1
         self.update_mode_led()
         
@@ -98,10 +82,8 @@ class XboxControl:
         
         if self.mode == 1:
             LED_mode = Xbox360Controller.LED_TOP_LEFT_ON
-            print("XBOX Controller: Stationary Mode")
         elif self.mode == 2:
             LED_mode = Xbox360Controller.LED_TOP_RIGHT_ON
-            print("XBOX Controller: Walk Mode")
         elif self.mode == 3:
             LED_mode = Xbox360Controller.LED_BOTTOM_LEFT_ON
         elif self.mode == 4:
@@ -122,25 +104,6 @@ class XboxControl:
 
         # Update internal axes
         self.update_axes()
-
-        # Do we need to handle a button press (Non mode dependant)
-        if self.do_sleep:
-            command_queue = deque()
-            command_queue.append(Command(command = "sleep_async", args = None))
-            self.do_sleep = False
-            return command_queue
-        
-        if self.do_reboot:
-            command_queue = deque()
-            command_queue.append(Command(command = "reboot", args = None))
-            self.do_reboot = False
-            return command_queue
-
-        if self.do_reset_position:
-            command_queue = deque()
-            command_queue.append(Command(command = "reset_position", args = None))
-            self.do_reset_position = False
-            return command_queue
         
         if self.mode == self.MODE_STATIONARY:
             
@@ -158,8 +121,8 @@ class XboxControl:
 
         command_queue = deque()
 
-        lift_amount = 60
-        playtime = 15
+        lift_amount = 51
+        playtime = 13
 
         des_walk_speed = int(-100*self.axis_r['y'])
         des_turn_speed = int(100*self.axis_r['x'])
@@ -181,9 +144,7 @@ class XboxControl:
             # The offset to keep the robot straight is applied in the Walk gait now
             # Let's apply the y-offset here so the robot leans forward (so the knees don't hit the ground)
             self.dog.motion.desired_y = 30
-            trim_r = 0.5*-des_turn_speed
-            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime, trim_r)))
-           
+            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime)))
             if not self.dog.motion.current_motion == Motion.WALK:
                 command_queue.append(Command(command = 'walk', args=['f']))
 

@@ -4,6 +4,8 @@ from XYZrobotServo import XYZrobotServo
 from Leg import Leg
 from Dog import Dog
 from Controls.XboxControl import XboxControl
+from threading import Thread
+from Networking.DataServer import run_socket_server
             
 if __name__ == '__main__':
 
@@ -35,6 +37,13 @@ if __name__ == '__main__':
     for servo in leg_servos:
         servo.RAMWrite(24, Kp_dat)
         servo.RAMWrite(28, Ki_dat)
+
+    # Start the data server thread (daemon)
+    t = Thread(target=run_socket_server, daemon=True, args=(dog, leg_servos, )).start()
+
+    # Schedule Events
+    dog.schedule_event(dog.check_voltage, 5000) # Check the voltage every 5s
+    dog.schedule_event(dog.update_orientation, 100)
 
     dog.wake_up()
     dog.live(verbose = True)

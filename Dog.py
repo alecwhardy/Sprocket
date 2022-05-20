@@ -5,6 +5,7 @@ from CommandHandler import CommandHandler
 from Motion import Motion
 from IMU import IMU
 from DataPlot import DataPlot
+from functions import *
 
 class Dog:
     """ Contains all of the necessary code to determine the current state of the dog.  All behavior is handled by the Behavior class
@@ -17,9 +18,14 @@ class Dog:
     WIDTH = 117
 
     NEUTRAL_HEIGHT = 150
-    NEUTRAL_SPEED = 20
+    NEUTRAL_SPEED = 30
+
+    SHUTOFF_VOLTAGE = 8.5
+
+    scheduled_events = [] # tuples of (function, event period ms, last execution time)
 
     # The most recent x, y, z, r, p, yaw values that the dog moved to after a go_position() call
+    # I.E. the position the dog 'thinks' it's in
     x = 0
     y = 0
     z = 0
@@ -28,6 +34,15 @@ class Dog:
     yaw = 0
     speed = 0
 
+    # Used for "balance" mode - IMU compensation.  
+    desired_x = 0
+    desired_y = 0
+    desired_z = 0
+    desired_roll = 0
+    desired_pitch = 0
+    desired_yaw = 0
+
+    # The true roll, pitch, and yaw, as determined by the IMU
     sensor_roll = 0
     sensor_pitch = 0
     sensor_yaw = 0
@@ -136,6 +151,44 @@ class Dog:
         for servo in self.legs[0].servos:
             servo.reboot()
 
+    def check_voltage(self):
+            try:
+                if self.legs[0].servos[0].getVoltage() < self.SHUTOFF_VOLTAGE:
+                    self.die()
+                    print("Batteries Dead!")
+            except:
+                # Sometimes we don't get voltage quick enough
+                pass
+
+    def update_orientation(self):
+        self.sensor_yaw, self.sensor_pitch, self.sensor_roll = self.imu.get_euler()  # Todo: Only do this once a second
+        # invert pitch
+        try:
+            self.sensor_pitch = -self.sensor_pitch
+        except:
+            pass  # No IMU data
+        
+
+    def schedule_event(self, function, per_ms):
+        self.scheduled_events.append((function, per_ms, 0))
+
+    def run_scheduled_events(self):
+        cur_millis = millis()
+
+        for i in range(len(self.scheduled_events)):
+            event = self.scheduled_events[i]
+            event_fn = event[0]
+            event_freq = event[1]  # Event "frequency", even though it's tecnically event period
+            event_last = event[2]
+
+            if event_last + event_freq < cur_millis:
+                # run the event
+                event_fn()
+
+                # update the event entry
+                self.scheduled_events[i] = (event_fn, event_freq, cur_millis)
+
+
     def live(self, verbose = False):
         """ Main loop.  Update sensor data, update servos, and respond to behaviors and controls
         """
@@ -149,10 +202,12 @@ class Dog:
             self.command_handler.handle_commands()
 
             # update sensors
+            self.run_scheduled_events()
+
+            # Todo: move this elsewhere
             latest_rss = self.imu.get_gyro_rss()
             self.dataplot.record_loop(latest_rss)
 
-            
             # update motion
             self.motion.update_motion()
 

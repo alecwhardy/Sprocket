@@ -32,10 +32,13 @@ class IMU:
             return -1
         return rss
 
+    def get_mag(self):
+        return self.sensor.magnetic
+
 
 if __name__ == "__main__":
     
     imu = IMU()
     while True:
-        print(imu.get_linear_rss())
+        print(imu.get_euler())
         time.sleep(1)

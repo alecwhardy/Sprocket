@@ -108,7 +108,7 @@ class ConsoleControl:
         print("Leg absolute move: L [n] [x] [y] [z]")
         print("Prance: prance [num]")
         print("Walk: walk [f, b, tl, tr, sl, sr] [n]")
-        print("Walk Parameters: walk_p [step_len] [lift_amnt] [playtime]")
+        print("Walk Parameters: walk_p [step_len] [lift_amnt] [playtime] [r trim, optional]")
         print("Sleep: sleep")
         print("Die: die")
         print("Resource usage: res")
