@@ -168,7 +168,7 @@ class XYZrobotServo:
 		self.stream.write(header)
 
 		if data1size > 0:
-			 self.stream.write(data1)
+			self.stream.write(data1)
 		if data2size > 0:
 			self.stream.write(data2)
 		self.lastError = self.Error.NoError
@@ -318,6 +318,15 @@ class XYZrobotServo:
 
 	def torqueOff(self):
 		self.sendIJog(0, self.SET_TORQUE_OFF, 0)
+
+		led_policy = bytearray(1)
+		led_policy[0] = 0b1111
+
+		led_color = bytearray(1)
+		led_color[0] = 0b0010
+
+		self.RAMWrite(2, led_policy)   # LED policy set to user for all 4 colors
+		self.RAMWrite(53, led_color)  # LED turns Blue
 
 	def reboot(self):
 		self.sendRequest(self.CMD_REBOOT, None)

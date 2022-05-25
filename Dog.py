@@ -145,6 +145,19 @@ class Dog:
     def wake_up(self):
         print("Resetting position 'waking up'")
         self.go_position(0, 0, 150, 0, 0, 0, self.NEUTRAL_SPEED)
+
+        # Reset the LED policy for the servos, because if we died, then they are user-controlled and blue
+        led_policy = bytearray(1)
+        led_policy[0] = 0b0001
+        led_color = bytearray(1)
+        led_color[0] = 0b1111
+       
+        for leg in self.legs:
+            for servo in leg.servos:
+                servo.RAMWrite(2, led_policy)
+                servo.RAMWrite(53, led_color)
+
+
         #TODO: Calibrate Euler angles here
 
     def servo_reboot(self):

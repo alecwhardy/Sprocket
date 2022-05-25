@@ -36,6 +36,9 @@ class XboxControl:
     do_reboot = False
     do_reset_position = False
 
+    playtime = 15
+    step_height = 50
+
     def __init__(self, dog, controller_id = 0, axis_threshold = 0.1):
 
         self.dog = dog
@@ -56,6 +59,7 @@ class XboxControl:
         self.controller.button_select.when_pressed = self.button_select  # Back button, do servo reset
         self.controller.button_start.when_pressed = self.button_start    # Start button, do sleep
         self.controller.button_a.when_pressed = self.button_a            # A button, do reset position
+        self.controller.hat.when_moved = self.hat_pressed                # The D-pad is being pressed
         self.update_mode_led()
 
         self.last_update = millis()
@@ -68,6 +72,19 @@ class XboxControl:
 
     def button_a(self, button):
         self.do_reset_position = True
+
+    def hat_pressed(self, hat):
+        if hat.y == 1 or hat.y == -1:
+            # Pressed UP or DOWN
+            self.step_height += hat.y
+            print("Step height: {}".format(self.step_height))
+        elif hat.x == 1 or hat.x == -1:
+            # Pressed RIGHT or LEFT
+            self.playtime += hat.x
+            print("Playtime: {}".format(self.playtime))
+            return
+
+
 
     def update_axes(self):
         """ Updates the axis positions, taking into account the axis_threshold
@@ -158,8 +175,8 @@ class XboxControl:
 
         command_queue = deque()
 
-        lift_amount = 60
-        playtime = 15
+        playtime = self.playtime
+        lift_amount = self.step_height
 
         des_walk_speed = int(-100*self.axis_r['y'])
         des_turn_speed = int(100*self.axis_r['x'])
@@ -168,8 +185,8 @@ class XboxControl:
         # wturn_playtime = int(lin_interp(100, abs(des_turn_speed), 0, MIN_PLAYTIME_TURN, MAX_PLAYTIME))
         wturn_playtime = 13
 
-        if step_len > 100:
-            lift_amount += step_len//5
+        # if step_len > 100:
+        #     lift_amount += step_len//5
 
          # Clear the y-offset (set below) so the robot leans forward (so the knees don't hit the ground)
          # TODO: Move this to a better spot!
