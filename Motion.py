@@ -22,6 +22,8 @@ class Motion:
     steps_remaining = 0 # make this -1 for walking indefinitely
     direction = 0
 
+    recording = False
+
     motion_delay = False
     motion_delay_time = 0
     last_motion = 0
@@ -170,3 +172,10 @@ class Motion:
 
             
 
+class MotionRecordingServoPositionFrame:
+
+    def __init__(self, servo_positions, duration_ms):
+        self.positions = servo_positions
+        self.duration = duration_ms
+
+    

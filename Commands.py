@@ -165,7 +165,11 @@ class Commands:
             r_trim = float(args[3])
         except:
             r_trim = 0.0
-        self.dog.motion.walk.gait.update_set_positions(self.dog, step_len, lift_amount, playtime, r_trim)
+        try:
+            f_trim = float(args[4])
+        except:
+            f_trim = 0
+        self.dog.motion.walk.gait.update_set_positions(self.dog, step_len, lift_amount, playtime, r_trim, f_trim)
 
     def stop(self):
         self.dog.motion.stop_walk()

@@ -5,6 +5,7 @@ from CommandHandler import CommandHandler
 from Motion import Motion
 from IMU import IMU
 from DataPlot import DataPlot
+from XYZrobotServo import XYZrobotServo
 from functions import *
 
 class Dog:
@@ -146,18 +147,14 @@ class Dog:
         print("Resetting position 'waking up'")
         self.go_position(0, 0, 150, 0, 0, 0, self.NEUTRAL_SPEED)
 
-        # Reset the LED policy for the servos, because if we died, then they are user-controlled and blue
-        led_policy = bytearray(1)
-        led_policy[0] = 0b0001
-        led_color = bytearray(1)
-        led_color[0] = 0b1111
-       
+        # Reset the LED policy for the servos, because if we died, then they are user-controlled and blue       
         for leg in self.legs:
             for servo in leg.servos:
-                servo.RAMWrite(2, led_policy)
-                servo.RAMWrite(53, led_color)
+                servo.set_LED(XYZrobotServo.LED_Color.WHITE)
+                time.sleep(0.01)  # Need to wait before setting the LED color after changing the policy
+                servo.reset_LED_alarm_policy()
 
-
+                
         #TODO: Calibrate Euler angles here
 
     def servo_reboot(self):

@@ -141,6 +141,8 @@ class Crude_Gait:
         playtime = self.set_positions["UP"][3]
         sleeptime = playtime/100  # Playtime is in terms of 10ms, so this sets sleeptime = playtime
 
+        sleeptime += 0.01         # Give the motors 1ms extra to get to their new positions
+
         # See what direction we were going last time, if different reset state
         if direction != self.direction:
             self.state = 1

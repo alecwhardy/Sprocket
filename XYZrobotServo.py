@@ -21,7 +21,7 @@ class XYZrobotServo:
 
 	DEFAULT_RESPONSE_SIZE = 64
 
-	class Error(Enum):
+	class CommunicationError(Enum):
 		# No error.
 		NoError = 0
 
@@ -63,6 +63,17 @@ class XYZrobotServo:
 		# The length byte returned by an EEPROM Read or RAM Read command was wrong.
 		ReadLengthWrong = 17
 
+	class LED_Color():
+		OFF = b'\x00'
+		WHITE = b'\x01'
+		BLUE = b'\x02'
+		MAGENTA = b'\x0a'
+
+	class ServoAckPolicy():
+		ONLY_STAT = b'\x00'
+		ONLY_READ_AND_STAT = b'\x01'
+		ALL = b'\x02'
+
 	class Status:
 		
 		def __init__(self, bytes):
@@ -83,7 +94,7 @@ class XYZrobotServo:
 	def __init__(self, stream, id, debug = False):
 		self.stream = stream
 		self.id = id
-		self.lastError = None
+		self.lastComError = None
 		self.debug = debug
 
 	def flushRead(self):
@@ -105,15 +116,15 @@ class XYZrobotServo:
 		data = bytearray(returnSize)
 		self.readAck(cmd, response, 4, data, returnSize)
 
-		if self.lastError != self.Error.NoError:
+		if self.lastComError != self.CommunicationError.NoError:
 			return
 
 		if response[2] != request[0]:
-			self.lastError = self.Error.ReadOffsetWrong
+			self.lastComError = self.CommunicationError.ReadOffsetWrong
 			return
 
 		if response[3] != request[1]:
-			self.lastError = self.Error.ReadLengthWrong
+			self.lastComError = self.CommunicationError.ReadLengthWrong
 			return
 
 		return data
@@ -132,6 +143,24 @@ class XYZrobotServo:
 
 	def RAMWrite(self, startAddress, data):
 		return self.memoryWrite(self.CMD_RAM_WRITE, startAddress, data)
+
+	def writeAckPolicyRam(self, policy):
+		self.RAMWrite(1, policy)
+
+	def writeIDRAM(self, ID):
+		ID_bytes = bytearray(1)
+		ID_bytes[0] = ID
+		self.RAMWrite(0, ID_bytes)
+
+	def writeIDEEPROM(self, ID):
+		ID_bytes = bytearray(1)
+		ID_bytes[0] = ID
+		self.memoryWrite(self.CMD_EEPROM_WRITE, 6, ID_bytes)
+
+	def readIDEEPROM(self):
+		ret = self.memoryRead(self.CMD_EEPROM_READ, 6, 1)
+		return ret[0]
+
 
 	def sendRequest(self, cmd, data1, data2 = None):
 		""" Sends a command to the servos.
@@ -171,7 +200,7 @@ class XYZrobotServo:
 			self.stream.write(data1)
 		if data2size > 0:
 			self.stream.write(data2)
-		self.lastError = self.Error.NoError
+		self.lastComError = self.CommunicationError.NoError
 
 
 	def readAck(self, cmd, data1, data1size, data2 = None, data2size = 0):
@@ -201,25 +230,25 @@ class XYZrobotServo:
 		
 		# Check for timeout
 		if len(response) != len(header):
-			self.lastError = self.Error.HeaderTimeout
+			self.lastComError = self.CommunicationError.HeaderTimeout
 			return
 		
 		# If no timeout, fill the contents of header with the contents of the response
 		header[:] = response
 		if header[0] != 0xFF:
-			self.lastError = self.Error.HeaderByte1Wrong
+			self.lastComError = self.CommunicationError.HeaderByte1Wrong
 			return
 		if header[1] != 0xFF:
-			self.lastError = self.Error.HeaderByte2Wrong
+			self.lastComError = self.CommunicationError.HeaderByte2Wrong
 			return
 		if header[3] != self.id:
-			self.lastError = self.Error.IdWrong
+			self.lastComError = self.CommunicationError.IdWrong
 			return
 		if header[4] != cmd:
-			self.lastError = self.Error.CmdWrong
+			self.lastComError = self.CommunicationError.CmdWrong
 			return
 		if header[2] != size:
-			self.lastError = self.Error.SizeWrong
+			self.lastComError = self.CommunicationError.SizeWrong
 			return
 		
 
@@ -229,7 +258,7 @@ class XYZrobotServo:
 			if self.debug:
 				print("Received serial data1: " + str(response))
 			if len(response) != data1size:
-				self.lastError = self.Error.Data1Timeout
+				self.lastComError = self.CommunicationError.Data1Timeout
 				return
 			# Copy the contents of response into data1
 			data1[:] = response
@@ -240,7 +269,7 @@ class XYZrobotServo:
 			if self.debug:
 				print("Received serial data2: " + response)
 			if len(response) != data2size:
-				self.lastError = self.Error.Data2Timeout
+				self.lastComError = self.CommunicationError.Data2Timeout
 				return
 			# Copy the contents of response into data2
 			data2[:] = response
@@ -253,14 +282,14 @@ class XYZrobotServo:
 			checksum ^= data2[i]
 
 		if header[5] != checksum & 0xFE:
-			self.lastError = self.Error.Checksum1Wrong
+			self.lastComError = self.CommunicationError.Checksum1Wrong
 			return
 		if(header[6] != ~checksum & 0xFE):
-			self.lastError = self.Error.Checksum2Wrong
+			self.lastComError = self.CommunicationError.Checksum2Wrong
 			return
 		
 		# If we get here, there is no error, set lastError appropriately
-		self.lastError = self.Error.NoError
+		self.lastComError = self.CommunicationError.NoError
 		return header
 
 	def readStatus(self):
@@ -319,13 +348,11 @@ class XYZrobotServo:
 	def torqueOff(self):
 		self.sendIJog(0, self.SET_TORQUE_OFF, 0)
 
-		led_policy = bytearray(1)
-		led_policy[0] = 0b1111
 
 		led_color = bytearray(1)
 		led_color[0] = 0b0010
 
-		self.RAMWrite(2, led_policy)   # LED policy set to user for all 4 colors
+		self.set_LED_alarm_policy()   # Set LED policy to user choice
 		self.RAMWrite(53, led_color)  # LED turns Blue
 
 	def reboot(self):
@@ -333,6 +360,31 @@ class XYZrobotServo:
 
 	def getVoltage(self):
 		return int(self.RAMRead(54, 1)[0])/16
+
+	def set_LED(self, color_policy_byte):
+		self.RAMWrite(53, color_policy_byte)
+
+	def set_LED_alarm_policy(self, all_LEDs = True, policy_byte = None):
+		""" Set the LED alarm policy. Defaults to user controlled if no arguments are passed
+
+		Args:
+			all_LEDs (bool, optional): Set this False and pass a policy_byte if not controlling all LEDs. Defaults to True.
+		"""
+		if all_LEDs:
+			policy_byte = b'\x0f'
+		self.RAMWrite(2, policy_byte)
+
+	def reset_LED_alarm_policy(self,  EEPROM=False):
+		""" Restore the original LED Alarm policy (change color on servo error)
+
+		Args:
+			EEPROM (bool, optional): Write to EEPROM. Defaults to False.  Not supported.
+		"""
+		if EEPROM:
+			print("Unimplemented: Write LED policy to EEPROM")
+		else:
+			# Write the LED Alarm policy back to default (0)
+			self.RAMWrite(2, b'\x00')
 
 
 if __name__ == "__main__":

@@ -43,12 +43,12 @@ class CommandHandler:
 
     def handle_command(self):
         if len(self.command_queue) > 0:
-            current_command = self.command_queue.popleft()
-            command_method = getattr(self.commands, current_command.command)
-            if current_command.args is None:
+            self.current_command = self.command_queue.popleft()
+            command_method = getattr(self.commands, self.current_command.command)
+            if self.current_command.args is None:
                 result = command_method()
             else:
-                result = command_method(current_command.args)
+                result = command_method(self.current_command.args)
             
             
 

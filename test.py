@@ -6,4 +6,8 @@ if __name__ == '__main__':
     controller = Xbox360Controller(0, axis_threshold=0.2)
     while True:
         print("{:3.5f} {:3.5f}".format(controller.hat.x,controller.hat.y))
+
+        if controller.button_trigger_r.is_pressed:
+            print("Button Trigger R")
+
         time.sleep(.1)

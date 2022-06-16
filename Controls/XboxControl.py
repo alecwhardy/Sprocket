@@ -38,6 +38,7 @@ class XboxControl:
 
     playtime = 15
     step_height = 50
+    front_trim = 0
 
     def __init__(self, dog, controller_id = 0, axis_threshold = 0.1):
 
@@ -74,10 +75,19 @@ class XboxControl:
         self.do_reset_position = True
 
     def hat_pressed(self, hat):
-        if hat.y == 1 or hat.y == -1:
+        
+        if self.controller.button_trigger_r.is_pressed and (hat.y == 1 or hat.y == -1):
+            # Pressed UP or DOWN with R trigger button
+            self.front_trim += hat.y
+            print("Front Step Length Trim: {}".format(self.front_trim))
+            return
+        
+        elif hat.y == 1 or hat.y == -1:
             # Pressed UP or DOWN
             self.step_height += hat.y
             print("Step height: {}".format(self.step_height))
+            return
+        
         elif hat.x == 1 or hat.x == -1:
             # Pressed RIGHT or LEFT
             self.playtime += hat.x
@@ -177,6 +187,7 @@ class XboxControl:
 
         playtime = self.playtime
         lift_amount = self.step_height
+        trim_f = self.front_trim    # Lift up the front legs higher because it drags
 
         des_walk_speed = int(-100*self.axis_r['y'])
         des_turn_speed = int(100*self.axis_r['x'])
@@ -199,7 +210,7 @@ class XboxControl:
             # Let's apply the y-offset here so the robot leans forward (so the knees don't hit the ground)
             self.dog.motion.desired_y = 30
             trim_r = 0.5*-des_turn_speed
-            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime, trim_r)))
+            command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime, trim_r, trim_f)))
            
             if not self.dog.motion.current_motion == Motion.WALK:
                 command_queue.append(Command(command = 'walk', args=['f']))
@@ -368,7 +379,7 @@ class XboxControl:
 
 if __name__ == '__main__':
     os.system('sudo chmod 666 /sys/class/leds/xpad0/brightness')
-    controller = Xbox360Controller(0, axis_threshold=0.2)
+    controller = Xbox360Controller(0, axis_threshold=0.05)
     while True:
-        print("{:3.5f} {:3.5f}".format(controller.hat.x,controller.hat.y))
+        print("{:3.5f} {:3.5f}".format(controller.axis_r.x, controller.axis_r.y))
         time.sleep(.1)
