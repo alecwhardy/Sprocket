@@ -139,12 +139,14 @@ class Dog:
 
     def die(self):
         print("Dog is dying...")
+        self.motion.motion_enable = False
         for leg in self.legs:
             for servo in leg.servos:
                 servo.torqueOff()
 
     def wake_up(self):
         print("Resetting position 'waking up'")
+        self.motion.motion_enable = True
         self.go_position(0, 0, 150, 0, 0, 0, self.NEUTRAL_SPEED)
 
         # Reset the LED policy for the servos, because if we died, then they are user-controlled and blue       

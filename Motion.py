@@ -13,6 +13,8 @@ class Motion:
     STATIONARY = 0
     PRANCE = 1
     WALK = 2
+
+    motion_enable = True
     
     current_motion = STATIONARY
 
@@ -138,6 +140,9 @@ class Motion:
         self.steps_remaining -= 1
 
     def update_motion(self):
+
+        if not self.motion_enable:
+            return
 
         # If we have a desired leg position that has not yet been handled
         for leg in self.dog.legs:

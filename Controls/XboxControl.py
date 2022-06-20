@@ -14,6 +14,7 @@ from Motion import Motion
 class XboxControl:
 
     CONNECTED = True
+    CONTROL_ENABLE = False
 
     MODE_STATIONARY = 1
     MODE_WALK = 2
@@ -54,11 +55,13 @@ class XboxControl:
             self.controller = Xbox360Controller(controller_id, axis_threshold=axis_threshold)
         except Exception:
             self.CONNECTED = False
+            self.CONTROL_ENABLE = False
             return
 
         self.controller.button_mode.when_pressed = self.changeMode
         self.controller.button_select.when_pressed = self.button_select  # Back button, do servo reset
-        self.controller.button_start.when_pressed = self.button_start    # Start button, do sleep
+        self.controller.button_start.when_pressed = self.button_start    # Start Button, Connect or disconnect Xbox controller
+        self.controller.button_y.when_pressed = self.button_y            # Y button, do sleep
         self.controller.button_a.when_pressed = self.button_a            # A button, do reset position
         self.controller.hat.when_moved = self.hat_pressed                # The D-pad is being pressed
         self.update_mode_led()
@@ -66,15 +69,28 @@ class XboxControl:
         self.last_update = millis()
 
     def button_select(self, button):
+        if not self.CONTROL_ENABLE:
+            return
         self.do_reboot = True
     
-    def button_start(self, button):
+    def button_y(self, button):
+        if not self.CONTROL_ENABLE:
+            return
         self.do_sleep = True
 
+    def button_start(self, button):
+        self.CONTROL_ENABLE = not self.CONTROL_ENABLE
+        print("Xbox Controller Control Enable: {}".format(self.CONTROL_ENABLE))
+
     def button_a(self, button):
+        if not self.CONTROL_ENABLE:
+            return
         self.do_reset_position = True
 
     def hat_pressed(self, hat):
+        
+        if not self.CONTROL_ENABLE:
+            return
         
         if self.controller.button_trigger_r.is_pressed and (hat.y == 1 or hat.y == -1):
             # Pressed UP or DOWN with R trigger button
@@ -137,6 +153,9 @@ class XboxControl:
         self.controller.set_led(LED_mode)
 
     def get_commands(self):
+
+        if not self.CONTROL_ENABLE:
+            return
 
         cur_millis = millis()
 
@@ -246,77 +265,6 @@ class XboxControl:
         else:
             return command_queue
             
-
-
-
-
-
-
-
-    # def commands_walk(self, dog):
-
-    #     # Right stick is for walking forward/backward and turning
-    #     # Left stick is for walking sideways and Z-height
-
-    #     dog.go_position(0, 0, dog.z, 0, 0, 0, 20)
-
-    #     walk = Walk()
-    #     step_len = 30
-    #     lift_amount = 70
-    #     playtime = 12
-    #     # walk.update_set_positions(dog, step_len, lift_amount, playtime)
-
-    #     while self.mode == self.MODE_WALK:
-            
-    #         MIN_PLAYTIME_WALK = 5
-    #         MIN_PLAYTIME_TURN = 8
-    #         MAX_PLAYTIME = 50
-            
-    #         des_wf_speed = int(-100*self.controller.axis_r.y)
-    #         des_turn_speed = int(100*self.controller.axis_r.x)
-
-    #         # wf_playtime = int(lin_interp(100, des_wf_speed, 0, MIN_PLAYTIME_WALK, MAX_PLAYTIME))
-    #         wf_playtime = 10
-    #         step_len = int(-100*self.controller.axis_r.y)
-    #         wturn_playtime = int(lin_interp(100, abs(des_turn_speed), 0, MIN_PLAYTIME_TURN, MAX_PLAYTIME))
-
-    #         if step_len > 100:
-    #             lift_amount += step_len//5
-
-
-    #         if des_wf_speed > 10:
-    #             walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
-
-    #             # Apply correction factor to "BACK_DOWN_L"
-    #             old = walk.set_positions["BACK_DOWN_L"]
-    #             corrected_position = (old[0], 1.3*old[1], old[2], old[3])
-    #             walk.set_positions["BACK_DOWN_L"] = corrected_position
-
-    #             walk.crude_walk(dog, Walk.FORWARD)
-    #             print("WF: Steplen {}".format(step_len))
-
-    #         elif des_wf_speed < -10:
-    #             step_len = -step_len
-    #             walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
-    #             walk.crude_walk(dog, Walk.BACKWARD)
-    #             print("WB: Steplen {}".format(step_len))
-
-    #         elif des_turn_speed > 20:
-    #             step_len = 30
-    #             walk.update_set_positions(dog, step_len, lift_amount, wturn_playtime)
-    #             walk.crude_walk(dog, Walk.TURN_RIGHT)
-    #             print("TURN_R: Playtime {}".format(wturn_playtime))
-
-    #         elif des_turn_speed < -20:
-    #             step_len = 30
-    #             walk.update_set_positions(dog, step_len, lift_amount, wturn_playtime)
-    #             walk.crude_walk(dog, Walk.TURN_LEFT)
-    #             print("TURN_L: Playtime {}".format(wturn_playtime))
-
-    #         else:
-    #             walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
-    #             walk.crude_walk(dog, Walk.STILL)
-    #             print("Standing Still")
 
     def commands_stationary(self):
    

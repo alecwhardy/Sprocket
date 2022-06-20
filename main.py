@@ -45,7 +45,8 @@ if __name__ == '__main__':
     dog.schedule_event(dog.check_voltage, 5000) # Check the voltage every 5s
     dog.schedule_event(dog.update_orientation, 100)
 
-    dog.wake_up()
+    #dog.wake_up()
+    dog.die()
     dog.live(verbose = True)
 
 
