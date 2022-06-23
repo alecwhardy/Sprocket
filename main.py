@@ -1,11 +1,11 @@
 import serial
 from Behavior import Behavior
-from XYZrobotServo import XYZrobotServo
+from XYZrobotServo import *
 from Leg import Leg
 from Dog import Dog
 from Controls.XboxControl import XboxControl
 from threading import Thread
-from Networking.DataServer import run_socket_server
+from Networking.DataServer import serve
             
 if __name__ == '__main__':
 
@@ -13,17 +13,13 @@ if __name__ == '__main__':
     ser = serial.Serial('/dev/ttyS0', baudrate = 115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
 
     # Create a XYZrobotServo object for each leg servo
-    leg_servos = []
+    servo_list = []
     for i in range(12):
-        leg_servos.append(XYZrobotServo(ser, i+1, debug=False))
-
-    # Create a Leg object for each leg in an array, following the order used by the Dog class initializer (FL, FR, RL, RR)
-    # The Leg class already knows what servo ID corresponds to what joint
-    # Example Usage: legs[Leg.FR].set_thigh_position(0, 0)
-    legs = [Leg("FL", leg_servos), Leg("FR", leg_servos), Leg("RL", leg_servos), Leg("RR", leg_servos)]
+        servo_list.append(XYZrobotServo(ser, i+1, debug=False))
+    servos = XYZrobotServos(servo_list)
 
     # Create the Dog object that lets us control the body position and movements
-    dog = Dog(legs)
+    dog = Dog(servos)
     
     Kp_dat = bytearray(2)
     Ki_dat = bytearray(2)
@@ -34,16 +30,17 @@ if __name__ == '__main__':
     Ki_dat[1] = 0x00
     Ki_dat[0] = 0x00
     
-    for servo in leg_servos:
+    for servo in servos:
         servo.RAMWrite(24, Kp_dat)
         servo.RAMWrite(28, Ki_dat)
 
     # Start the data server thread (daemon)
-    t = Thread(target=run_socket_server, daemon=True, args=(dog, leg_servos, )).start()
+    server_thread = Thread(target=serve, daemon=True, args=(dog, )).start()
 
     # Schedule Events
-    dog.schedule_event(dog.check_voltage, 5000) # Check the voltage every 5s
+    dog.schedule_event(dog.check_voltage, 30000)    # Check the voltage every 30s
     dog.schedule_event(dog.update_orientation, 100)
+    dog.schedule_event(dog.servos.updateAllStatus, 10) # Update the servo status every 10ms
 
     #dog.wake_up()
     dog.die()

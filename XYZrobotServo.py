@@ -77,13 +77,13 @@ class XYZrobotServo:
 	class Status:
 		
 		def __init__(self, bytes):
-			raw = unpack('BBHHHH', bytes)
-			self.statusError = raw[0]
-			self.statusDetail = raw[1]
-			self.pwm = raw[2]
-			self.posRef = raw[3]
-			self.position = raw[4]
-			self.iBus = raw[5]
+			self.raw = unpack('BBHHHH', bytes)
+			self.statusError = self.raw[0]
+			self.statusDetail = self.raw[1]
+			self.pwm = self.raw[2]
+			self.posRef = self.raw[3]
+			self.position = self.raw[4]
+			self.iBus = self.raw[5]
 
 		def __repr__(self):
 
@@ -385,6 +385,23 @@ class XYZrobotServo:
 		else:
 			# Write the LED Alarm policy back to default (0)
 			self.RAMWrite(2, b'\x00')
+
+
+
+class XYZrobotServos:
+
+	status = [None] * 12
+
+	def __init__(self, servos):
+		self.servos = servos
+
+	def __getitem__(self, key):
+		return self.servos[key]
+
+	def updateAllStatus(self):
+		for idx, servo in enumerate(self.servos):
+			self.status[idx] = servo.readStatus()
+
 
 
 if __name__ == "__main__":

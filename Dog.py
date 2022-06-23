@@ -48,13 +48,19 @@ class Dog:
     sensor_pitch = 0
     sensor_yaw = 0
 
-    def __init__(self, legs):
+    def __init__(self, servos):
         """[summary]
 
         Args:
             legs (List of Legs): Follow order Front Left, Front Right, Rear Left, Rear Right
         """
-        self.legs = legs
+        self.servos = servos
+
+        # Create a Leg object for each leg in an array, following the order used by the Dog class initializer (FL, FR, RL, RR)
+        # The Leg class already knows what servo ID corresponds to what joint
+        # Example Usage: legs[Leg.FR].set_thigh_position(0, 0)
+        self.legs = [Leg("FL", servos), Leg("FR", servos), Leg("RL", servos), Leg("RR", servos)]
+        
         self.command_handler = CommandHandler(self)
         self.motion = Motion(self)
         self.imu = IMU()
