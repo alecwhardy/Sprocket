@@ -76,19 +76,23 @@ class XYZrobotServo:
 
 	class Status:
 		
-		def __init__(self, bytes):
-			self.raw = unpack('BBHHHH', bytes)
-			self.statusError = self.raw[0]
-			self.statusDetail = self.raw[1]
-			self.pwm = self.raw[2]
-			self.posRef = self.raw[3]
-			self.position = self.raw[4]
-			self.iBus = self.raw[5]
+		def __init__(self, bytes_in):
+			self.bytes = bytes_in
+			raw = unpack('BBHHHH', bytes_in)
+			self.statusError = raw[0]
+			self.statusDetail = raw[1]
+			self.pwm = raw[2]
+			self.posRef = raw[3]
+			self.position = raw[4]
+			self.iBus = raw[5]
 
 		def __repr__(self):
 
 			resp = "PWM: " + str(self.pwm) + "\nP_R: " + str(self.posRef) + "\nPos: " + str(self.position) + "\n"
 			return resp
+
+		def __bytes__(self):
+			return self.bytes
 
 
 	def __init__(self, stream, id, debug = False):
@@ -401,6 +405,12 @@ class XYZrobotServos:
 	def updateAllStatus(self):
 		for idx, servo in enumerate(self.servos):
 			self.status[idx] = servo.readStatus()
+
+	def __bytes__(self):
+		output = bytearray()
+		for servo_status in self.status:
+			output += servo_status.bytes
+		return bytes(output)
 
 
 

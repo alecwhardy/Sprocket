@@ -1,10 +1,11 @@
 import socket
 from threading import Thread
+from Networking.DataStream import *
 
 host = '192.168.0.141'
 #host = 'hardydog'
 #port = 1241
-port = 1241
+port = 1242
 
 def serve(dog):
     """
@@ -33,12 +34,14 @@ def serve_client(conn, addr, dog):
     """
 
     with conn:
+        
         print(f"Connected by {addr}")
+        datastream = ServoDataStream(conn, dog)
+
         while True:
             
             if dog is None:
                 # We are testing the Socket Server.
-                
                 # Bombard the socket with the 'A' character
                 try:
                     conn.sendall(b'A')
@@ -46,6 +49,9 @@ def serve_client(conn, addr, dog):
                     print(f"Connection from {addr} closed")
                     conn.close()
                     exit()
+                return
+
+            datastream.update_data_sources()
 
 
 

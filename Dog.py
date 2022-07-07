@@ -74,8 +74,21 @@ class Dog:
         for leg in self.legs:
             leg.go_shoulder_angle(0, speed)
 
-    def go_position(self, X, Y, Z, roll, pitch, yaw, speed):
+    def calc_position(self, X, Y, Z, roll, pitch, yaw, speed):
+        """ Calculates and updates the calc_position value for each of the leg servos. 
 
+        Args:
+            X (float): X position
+            Y (float): Y position
+            Z (float): Z position
+            roll (float): Roll position
+            pitch (float): Pitch position
+            yaw (float): Yaw position
+            speed (int): Time for the position, in units of 10ms
+
+        Returns:
+            Bool: Returns true if a valid position was calculated for each joint.  If this returns false, the dog cannot move to this calculated position.
+        """
         if roll == 0:
             roll = 0.001
         if pitch == 0:
@@ -88,7 +101,6 @@ class Dog:
             leg.desired_y = Y
             leg.desired_z = Z
             leg.desired_speed = speed
-
 
         # Take care of pitch first
         # TODO: Determine if we *can* even go to the desired pitch (at the given height at we are at)
@@ -121,19 +133,15 @@ class Dog:
                 leg.desired_x -= X_front_offset
         
         # Calculate where each leg needs to go
-        # We need to do all of the shoulders first, then thighs, then knees in order, otherwise the legs don't move at the same time
-        # i.e. leg[3] will run last and behind the others if we don't run this way
-        for leg in self.legs:
-            if leg.calc_desired():
-                # If we successfully calculate the desired
-                self.x = X
-                self.y = Y
-                self.z = Z
-                self.roll = roll
-                self.pitch = pitch
-                self.yaw = yaw
-                self.speed = speed
-        # Go to the calculated shoulder angles
+        # Return true is all of the legs have a valid position
+        return self.legs[0].calc_desired() and self.legs[1].calc_desired() and self.legs[2].calc_desired() and self.legs[3].calc_desired()
+        
+    def go_calculated_positions(self):
+        """
+        Moves each of the legs to their calculated positions.  
+        
+        Make sure to call dog.calc_position() or leg.calc_position() first before calling this function.
+        """
         for leg in self.legs:
             leg.go_shoulder_angle(leg.calc_theta_shoulder, leg.desired_speed)
         # Go to the calculated thigh angles
@@ -142,6 +150,33 @@ class Dog:
         # Go to the calculated knee angles
         for leg in self.legs:
             leg.go_knee_angle(leg.calc_theta_knee, leg.desired_speed)
+
+
+    def go_position(self, X, Y, Z, roll, pitch, yaw, speed):
+        """ Calculates the positions for each leg given the dog's desired X, Y, Z, roll, pitch, yaw, speed parameters, and then moves there immediately.
+
+        Args:
+            X (float): X position
+            Y (float): Y position
+            Z (float): Z position
+            roll (float): Roll position
+            pitch (float): Pitch position
+            yaw (float): Yaw position
+            speed (int): Time for the position, in units of 10ms
+        """
+
+        if self.calc_position(X, Y, Z, roll, pitch, yaw, speed):
+            # If we can successfully calculate the desired position for each leg, update the current position valus before we move to them
+                self.x = X
+                self.y = Y
+                self.z = Z
+                self.roll = roll
+                self.pitch = pitch
+                self.yaw = yaw
+                self.speed = speed
+
+        # Go to the calculated shoulder angles
+        self.go_calculated_positions()
 
     def die(self):
         print("Dog is dying...")
@@ -229,6 +264,6 @@ class Dog:
             # update motion
             self.motion.update_motion()
 
-            time.sleep(0.001)
+            time.sleep(0)
 
             #print(self.legs[0].servos[1].readStatus().pwm)

@@ -149,7 +149,7 @@ class Motion:
             if not leg.desired_done:
                 leg.go_desired()
         
-        if self.current_motion != self.STATIONARY:
+        if self.current_motion == self.WALK or self.current_motion == self.PRANCE:
 
             # if we have a delay request, handle that
             if self.motion_delay:
@@ -168,19 +168,13 @@ class Motion:
                 if self.current_motion == self.WALK:
                     self.do_walk(self.direction)
             elif self.steps_remaining == 0:
-                self.stop_walk()   
+                self.stop_walk()
+
+            if self.current_motion == self.PLAYBACK:
+                pass
 
         # Go to the new desired leg positions
         for leg in self.dog.legs:
             if not leg.desired_done:
                 leg.go_desired()
 
-            
-
-class MotionRecordingServoPositionFrame:
-
-    def __init__(self, servo_positions, duration_ms):
-        self.positions = servo_positions
-        self.duration = duration_ms
-
-    

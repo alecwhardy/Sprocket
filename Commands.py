@@ -1,14 +1,20 @@
+from ast import If
 import time, os, psutil
+from cv2 import fastNlMeansDenoising
 from Motion import Motion
 from Walk import Walk
+from Recordings import MotionPlayback
 
 class Command:
     """ Really simple data type to pass into command queues. 
     """
     
-    def __init__(self, command, args):
+    def __init__(self, command, args = None):
         self.command = command
         self.args = args
+
+    def __repr__(self) -> str:
+        return "Command: " + str(self.command)
 
 
 class Commands:
@@ -38,6 +44,7 @@ class Commands:
 
     def reset_position(self):
         self.dog.motion.current_motion = Motion.STATIONARY
+        self.end_playback()
         self.dog.wake_up()
 
     def print_resource_usage(self):
@@ -53,6 +60,43 @@ class Commands:
 
     def speed(self, args):
         self.dog.speed = int(args[0])
+
+    def calc_absolute_position(self, args):
+        x = 0 
+        y = 0
+        roll = 0
+        pitch = 0
+        yaw = 0
+        z = self.dog.NEUTRAL_HEIGHT
+        speed = self.dog.NEUTRAL_SPEED
+        try:
+            x = float(args[0])
+            y = float(args[1])
+            z = float(args[2])
+            roll = float(args[3])
+            pitch = float(args[4])
+            yaw = float(args[5])
+            speed = int(args[6])
+        except IndexError:
+            pass
+
+        self.dog.calc_position(x, y, z, roll, pitch, yaw, speed)
+
+    def calc_leg_position(self, args):
+        """ Calculate the new position for a leg.  When  dog.go_position() is called, the leg's leg.desired_speed is used.
+
+        Args:
+            args (array): Leg number, X, Y, Z
+        """
+        leg_num = int(args[0])
+        x = float(args[1])
+        y = float(args[2])
+        z = float(args[3])
+
+        self.dog.legs[leg_num].calc_position(x, y, z)
+
+    def calc_move(self, args = None):
+        self.dog.go_calculated_positions()
 
     def absolute_move(self, args):
         
@@ -182,6 +226,40 @@ class Commands:
 
     def show_dataplot(self):
         self.dog.dataplot.show_plot()
+
+    def start_playback(self, args = None):
+        # args must contain which playback sequence to play.
+        # Start with the test command
+
+        loop = False
+
+        self.dog.command_handler.motion_playback = MotionPlayback()
+
+        # No args provided, play test recording
+        if args is None or len(args) == 0:
+            self.dog.command_handler.motion_playback.load_test()
+            print("Playing test recording.")
+            return
+
+        # filename provided, no loop
+        if len(args) > 0 and args[0] != 'loop':
+            print("Attempting to play recording: " + str(args[0]))
+            self.dog.command_handler.motion_playback.load_from_file(args[0])
+            
+        # no filename provided, looping the test recording
+        if len(args) == 1 and args[0] == 'loop':
+            self.dog.command_handler.motion_playback.load_test()
+            self.dog.command_handler.motion_playback_loop = True
+
+        # filename provided, looping
+        if len(args) >= 2 and args[0] == 'loop':
+            print("Attempting to loop play recording: " + str(args[1]))
+            self.dog.command_handler.motion_playback.load_from_file(args[1])
+            self.dog.command_handler.motion_playback_loop = True
+    
+    def end_playback(self):
+        self.dog.command_handler.motion_playback_loop = False
+        self.dog.command_handler.motion_playback = None
 
     def down(self):
         pass

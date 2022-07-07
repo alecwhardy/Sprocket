@@ -52,6 +52,15 @@ class ConsoleControl:
         elif response_tokens[0] == 'A':
             return Command(command = "absolute_move", args = response_tokens[1:])
 
+        elif response_tokens[0] == 'CA':  # Calc dog absolute position
+            return Command(command = "calc_absolute_position", args = response_tokens[1:])
+
+        elif response_tokens[0] == 'CL':  # Calc leg position
+            return Command(command = "calc_leg_position", args = response_tokens[1:])
+
+        elif response_tokens[0] == 'CM':  # Move to the calculated position (immediately)
+            return Command(command = "calc_move", args = None)
+
         elif response_tokens[0] == 'R':
             return Command(command = "relative_move", args = response_tokens[1:])
 
@@ -79,6 +88,12 @@ class ConsoleControl:
 
         elif response_tokens[0] == 'show_record':
             return Command(command = "show_dataplot", args = None)
+
+        elif response_tokens[0] == 'start_playback':
+            return Command(command = "start_playback", args = response_tokens[1:])
+        
+        elif response_tokens[0] == 'stop_playback':
+            return Command(command = "end_playback", args = None)
 
         elif response_tokens[0] == 'prance':
             

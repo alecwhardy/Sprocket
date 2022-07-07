@@ -3,12 +3,16 @@ from Controls.XboxControl import XboxControl
 from Commands import *
 
 from collections import deque
+from Recordings import MotionPlayback
 
 class CommandHandler:
     """ Grabs the desired commands from the different controllers and enqueues them
     """
 
     xbox_controller_enable = True
+    
+    motion_playback = None
+    motion_playback_loop = False
 
     def __init__(self, dog):
         self.dog = dog
@@ -33,6 +37,18 @@ class CommandHandler:
             if xbox_command is not None and xbox_command != [None]:
                 for command in xbox_command:
                     self.command_queue.append(command)
+
+        if self.motion_playback is not None:
+            # We are doing a motion playback.  Handle those commands.
+            # Note: This can be easily be ammended to handle non-motion commands as well.  Do so here.
+            playback_command = self.motion_playback.get_command()
+
+            if playback_command is not None:
+                if self.motion_playback_loop and playback_command.command == "end_playback":
+                    self.motion_playback.rewind()
+                    return
+                self.command_queue.append(playback_command)
+
 
         # Handle Behavior commands here
 

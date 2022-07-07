@@ -1,0 +1,24 @@
+# Move to the baseline position
+500, A, 0, 0, 150, 0, 0, 0, 50
+
+# Calculate the baseline position with 20 degree pitch
+# Calculate the leg[0] position to be at Z=120
+0, CA, 0, -10, 150, 0, 10, 0
+0, CL, 0, 0, 0, 130
+
+# Move to the calculated position for 1s
+1000, CM
+
+# Move to the baseline position
+200, A, 0, 0, 150, 0, 0, 0, 20
+
+# Calculate the baseline position with 20 degree pitch
+# Calculate the leg[1] position to be at Z=120
+0, CA, 0, -10, 150, 0, 10, 0
+0, CL, 1, 0, 0, 130
+
+# Move to the calculated position for 1s
+1000, CM
+
+# Move to the baseline position
+200, A, 0, 0, 150, 0, 0, 0, 20
