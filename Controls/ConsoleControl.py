@@ -74,7 +74,6 @@ class ConsoleControl:
             return Command(command = "absolute_leg_move", args = response_tokens[1:])
 
         elif response_tokens[0] == 'walk':
-            self.dog.dataplot.start_recording(10)
             return Command(command = "walk", args = response_tokens[1:])
 
         elif response_tokens[0] == 'walk_p':

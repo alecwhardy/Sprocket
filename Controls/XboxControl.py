@@ -40,6 +40,7 @@ class XboxControl:
     playtime = 15
     step_height = 50
     front_trim = 0
+    y_offset = 0
 
     def __init__(self, dog, controller_id = 0, axis_threshold = 0.1):
 
@@ -96,6 +97,12 @@ class XboxControl:
             # Pressed UP or DOWN with R trigger button
             self.front_trim += hat.y
             print("Front Step Length Trim: {}".format(self.front_trim))
+            return
+
+        elif self.controller.button_trigger_l.is_pressed and (hat.y == 1 or hat.y == -1):
+            # Pressed UP or DOWN with L trigger button
+            self.y_offset += hat.y
+            print("Y-Offset: {}".format(self.y_offset))
             return
         
         elif hat.y == 1 or hat.y == -1:
@@ -218,16 +225,12 @@ class XboxControl:
         # if step_len > 100:
         #     lift_amount += step_len//5
 
-         # Clear the y-offset (set below) so the robot leans forward (so the knees don't hit the ground)
-         # TODO: Move this to a better spot!
-        self.dog.motion.desired_y = 0
-
         # Walk forward
         if des_walk_speed > 10:
         
             # The offset to keep the robot straight is applied in the Walk gait now
             # Let's apply the y-offset here so the robot leans forward (so the knees don't hit the ground)
-            self.dog.motion.desired_y = 30
+            self.dog.motion.desired_y = self.y_offset
             trim_r = 0.5*-des_turn_speed
             command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime, trim_r, trim_f)))
            

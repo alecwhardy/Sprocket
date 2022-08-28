@@ -40,6 +40,8 @@ class Motion:
     desired_yaw = 0
     desired_speed = 0
 
+    IMU_history = []
+
     def __init__(self, dog):
         self.dog = dog
         self.walk = Walk(self.dog, Crude_Gait)
@@ -94,11 +96,6 @@ class Motion:
 
     def stop_walk(self):
         # Call this function when we are done walking so we reset back to a neutral position
-
-
-        # TODO: DELETE THIS!!
-        self.dog.dataplot.stop_recording()
-        self.dog.dataplot.print_average_filtered()
 
         self.walk.walk(Walk.STILL)
         self.walk.reset()
@@ -169,9 +166,6 @@ class Motion:
                     self.do_walk(self.direction)
             elif self.steps_remaining == 0:
                 self.stop_walk()
-
-            if self.current_motion == self.PLAYBACK:
-                pass
 
         # Go to the new desired leg positions
         for leg in self.dog.legs:

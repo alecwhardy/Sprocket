@@ -297,7 +297,7 @@ class XYZrobotServo:
 		return header
 
 	def readStatus(self):
-		""" Reads the status of the servo and returns a Status object
+		""" Reads the status of the servo and returns a Status object.  It takes 0.003s on average for an acknowledgment.
 
 		Returns:
 			[XYZrobotServo.Status]: Status of the servo

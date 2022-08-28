@@ -190,6 +190,7 @@ class Commands:
         elif direction == 'tr': direction = Walk.TURN_RIGHT
         elif direction == 'sl': direction = Walk.SIDE_LEFT
         elif direction == 'sr': direction = Walk.SIDE_RIGHT
+        elif direction == 'p': direction = Walk.IN_PLACE
 
         n = -1
         try:

@@ -26,11 +26,11 @@ if __name__ == '__main__':
         servo.RAMWrite(28, b'\x00\x00')  # Set ki = 0 by writing 2 bytes (big-endian)
 
     # Start the data server thread (daemon)
-    # server_thread = Thread(target=serve, daemon=True, args=(dog, )).start()
+    # server_thread = Thread(target=serve, daemon=True, args=(dog, )).start() 
 
     # Schedule Events
     dog.schedule_event(dog.check_voltage, 30000)    # Check the voltage every 30s
-    dog.schedule_event(dog.update_orientation, 100)
+    dog.schedule_event(dog.update_orientation, 20) # Update the IMU every 20ms
     #og.schedule_event(dog.servos.updateAllStatus, 10) # Update the servo status every 10ms.  Need to make this a seperate thread because it interferes with xbox360 controller
 
     #dog.wake_up()

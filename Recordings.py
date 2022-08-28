@@ -13,6 +13,7 @@ class MotionPlayback:
     playback_queue_copy = None
 
     playback_start_time = 0
+    playback_cursor_time = 0 # The time (ms) at which the current frame should end (from the start of the playback)
     
     current_frame_raw = ""
     current_frame_start_time = 0
@@ -64,6 +65,7 @@ class MotionPlayback:
             
             new_frame_tokens = new_frame.split(",")
             self.current_frame_duration = int(new_frame_tokens[0])
+            self.playback_cursor_time += self.current_frame_duration
             return new_frame
 
     def generate_command(self, frame):
@@ -102,12 +104,13 @@ class MotionPlayback:
 
         if self.playback_start_time == 0:
             # We are starting a new playback
+            self.playback_cursor_time = 0
             self.playback_start_time = cur_millis
             self.current_frame_start_time = self.playback_start_time
             self.current_frame_raw = self.get_next_frame()
             ret_cmd =  self.generate_command(self.current_frame_raw)
 
-        if self.current_frame_duration <= cur_millis - self.current_frame_start_time:
+        if cur_millis >= self.playback_start_time + self.playback_cursor_time:
             self.current_frame_start_time = cur_millis
             self.current_frame_raw = self.get_next_frame()
             ret_cmd = self.generate_command(self.current_frame_raw)

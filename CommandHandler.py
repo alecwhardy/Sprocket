@@ -1,9 +1,12 @@
 from Controls.ConsoleControl import ConsoleControl
 from Controls.XboxControl import XboxControl
 from Commands import *
+import functions
 
 from collections import deque
 from Recordings import MotionPlayback
+
+PLAYBACK_VERBOSE = True
 
 class CommandHandler:
     """ Grabs the desired commands from the different controllers and enqueues them
@@ -48,6 +51,8 @@ class CommandHandler:
                     self.motion_playback.rewind()
                     return
                 self.command_queue.append(playback_command)
+                if PLAYBACK_VERBOSE:
+                    print(str(int(functions.millis())) + " " + str(playback_command))
 
 
         # Handle Behavior commands here

@@ -213,13 +213,36 @@ class Dog:
                 # Sometimes we don't get voltage quick enough
                 pass
 
-    def update_orientation(self):
+    orientation_log_size = 100
+    orientation_log = [None] * orientation_log_size
+    orientation_log_i = 0
+    
+    def update_orientation(self, print_results = True):
         self.sensor_yaw, self.sensor_pitch, self.sensor_roll = self.imu.get_euler()  # Todo: Only do this once a second
         # invert pitch
         try:
             self.sensor_pitch = -self.sensor_pitch
         except:
-            pass  # No IMU data
+            return  # No IMU data
+        
+        # Save the last 100 datapoints (5s of data is we update every 50ms)
+        self.orientation_log[self.orientation_log_i] = self.imu.sensor.gyro
+        self.orientation_log_i += 1
+        if self.orientation_log_i >= self.orientation_log_size:
+            self.orientation_log_i = 0
+        
+        if print_results:
+            # print("R: {} P: {}\r".format(self.sensor_roll, self.sensor_pitch), end='')
+            try:
+                rss_sum = 0
+                for log_entry in self.orientation_log:
+                    rss = (log_entry[0] * log_entry[0]) + (log_entry[1] * log_entry[1]) + (log_entry[2] * log_entry[2])
+                    rss_sum += math.sqrt(rss)
+                avg = rss_sum / self.orientation_log_size
+                print("Gyro 5s RSS: {}\r".format(avg), end='')
+            except:
+                pass
+            
         
 
     def schedule_event(self, function, per_ms):
