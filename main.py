@@ -40,5 +40,5 @@ if __name__ == '__main__':
 
 
     # TODO!!!
-    # Dog calfs hit floor while walking becauyse they bend in too much.  Change code so shoulders bend (straighten) more than legs.
+    # Dog calfs hit floor while walking because they bend in too much.  Change code so shoulders bend (straighten) more than legs.
     # Example: When z-height is low (dog crounching), the calfs are almost parallel with the ground.  Change this (Leg.py?)

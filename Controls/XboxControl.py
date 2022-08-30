@@ -230,7 +230,7 @@ class XboxControl:
         
             # The offset to keep the robot straight is applied in the Walk gait now
             # Let's apply the y-offset here so the robot leans forward (so the knees don't hit the ground)
-            self.dog.motion.desired_y = self.y_offset
+            self.dog.desired_y = self.y_offset
             trim_r = 0.5*-des_turn_speed
             command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime, trim_r, trim_f)))
            

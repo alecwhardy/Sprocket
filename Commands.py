@@ -178,29 +178,36 @@ class Commands:
 
     def walk(self, args = None):
 
-        if args is None or len(args) == 0:
-            direction = 'f'
-        else:
-           direction = args[0]
+        if self.dog.motion.walk.gait.NAME == "CRUDE_BALANCED_GAIT":
+            n = int(args[0])
+            walk_x = float(args[1])
+            walk_y = float(args[2])
+            walk_yaw = float(args[3])
+            self.dog.motion.steps_remaining = n
+            self.dog.motion.do_walk((walk_x, walk_y, walk_yaw))
 
-        if direction == '': direction = Walk.FORWARD
-        elif direction == 'f': direction = Walk.FORWARD
-        elif direction == 'b': direction = Walk.BACKWARD
-        elif direction == 'tl': direction = Walk.TURN_LEFT
-        elif direction == 'tr': direction = Walk.TURN_RIGHT
-        elif direction == 'sl': direction = Walk.SIDE_LEFT
-        elif direction == 'sr': direction = Walk.SIDE_RIGHT
-        elif direction == 'p': direction = Walk.IN_PLACE
+        if self.dog.motion.walk.gait.NAME == "CRUDE_GAIT":
 
-        n = -1
-        try:
-            n = int(args[1])
-        except (IndexError, TypeError):
-            pass
+            if args is None or len(args) == 0:
+                direction = 'f'
+            else:
+                direction = args[0]
 
-        self.dog.motion.steps_remaining = n
-        
-        self.dog.motion.do_walk(direction)
+            if direction == '': direction = Walk.FORWARD
+            elif direction == 'f': direction = Walk.FORWARD
+            elif direction == 'b': direction = Walk.BACKWARD
+            elif direction == 'tl': direction = Walk.TURN_LEFT
+            elif direction == 'tr': direction = Walk.TURN_RIGHT
+            elif direction == 'sl': direction = Walk.SIDE_LEFT
+            elif direction == 'sr': direction = Walk.SIDE_RIGHT
+            elif direction == 'p': direction = Walk.IN_PLACE
+            n = -1
+            try:
+                n = int(args[1])
+            except (IndexError, TypeError):
+                pass
+            self.dog.motion.steps_remaining = n
+            self.dog.motion.do_walk(direction)
 
     def walk_params(self, args):
         step_len = int(args[0])

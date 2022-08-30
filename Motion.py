@@ -1,5 +1,5 @@
 import time
-from Walk import Crude_Gait, Walk
+from Walk import Crude_Gait, Crude_Balanced_Gait, Walk
 
 
 ''' 
@@ -32,19 +32,12 @@ class Motion:
 
     # The current positions are part of dog.x, dog.y, etc...
 
-    desired_x = 0
-    desired_y = 0
-    desired_z = 0
-    desired_roll = 0
-    desired_pitch = 0
-    desired_yaw = 0
-    desired_speed = 0
-
     IMU_history = []
 
     def __init__(self, dog):
         self.dog = dog
-        self.walk = Walk(self.dog, Crude_Gait)
+        # self.walk = Walk(self.dog, Crude_Gait)
+        self.walk = Walk(self.dog, Crude_Balanced_Gait)
 
     def request_absolute_position(self, x, y, z, roll, pitch, yaw, speed):
         
@@ -52,12 +45,12 @@ class Motion:
             self.dog.go_position(x, y, z, roll, pitch, yaw, speed)
 
         # Do we want to update desired_* here?
-        self.dog.x     = self.desired_x = x
-        self.dog.y     = self.desired_y = y
-        self.dog.z     = self.desired_z = z
-        self.dog.roll  = self.desired_roll = roll
-        self.dog.pitch = self.desired_pitch = pitch
-        self.dog.yaw   = self.desired_yaw = yaw
+        self.dog.x     = x
+        self.dog.y     = y
+        self.dog.z     = z
+        self.dog.roll  = roll
+        self.dog.pitch = pitch
+        self.dog.yaw   = yaw
     
     def request_relative_position(self, x, y, z, roll, pitch, yaw, speed):
 
@@ -73,22 +66,22 @@ class Motion:
             self.dog.go_position(new_x, new_y, new_z, new_roll, new_pitch, new_yaw, new_speed)
 
         # TODO: If we are walking or prancing, update desired_* variables so that the walking algorithm takes into consideration the desired offsets.
-        self.dog.x     = self.desired_x = new_x
-        self.dog.y     = self.desired_y = new_y
-        self.dog.z     = self.desired_z = new_z
-        self.dog.roll  = self.desired_roll = new_roll
-        self.dog.pitch = self.desired_pitch = new_pitch
-        self.dog.yaw   = self.desired_yaw = new_yaw
-        self.dog.speed = self.desired_speed = new_speed
+        self.dog.x     = new_x
+        self.dog.y     = new_y
+        self.dog.z     = new_z
+        self.dog.roll  = new_roll
+        self.dog.pitch = new_pitch
+        self.dog.yaw   = new_yaw
+        self.dog.speed = new_speed
 
-    def request_absolute_leg(self, leg, x, y, z, speed):
+    def request_absolute_leg(self, leg, x, y, z, playtime):
         if self.current_motion == self.STATIONARY:
             # If we are stationary and request an absolute position, go there immediately
-            self.dog.legs[leg].go_position(x, y, z, speed)
+            self.dog.legs[leg].go_position(x, y, z, playtime)
 
         else:
             # If we are walking/prancing, set the desired position and let update_motion move us there accordingly
-            self.dog.legs[leg].set_desired(x, y, z, speed)
+            self.dog.legs[leg].set_desired(x, y, z, playtime)
 
     def request_delay(self, delay):
         self.motion_delay = True

@@ -35,7 +35,7 @@ class Dog:
     yaw = 0
     speed = 0
 
-    # Used for "balance" mode - IMU compensation.  
+    # Used for Crude_Balance_Gait.  Set these values and they will be used for step calculations to preserve desired positions.
     desired_x = 0
     desired_y = 0
     desired_z = 0
@@ -74,7 +74,7 @@ class Dog:
         for leg in self.legs:
             leg.go_shoulder_angle(0, speed)
 
-    def calc_position(self, X, Y, Z, roll, pitch, yaw, speed):
+    def calc_position(self, X, Y, Z, roll, pitch, yaw, speed, verify_results = True):
         """ Calculates and updates the calc_position value for each of the leg servos. 
 
         Args:
@@ -134,8 +134,11 @@ class Dog:
         
         # Calculate where each leg needs to go
         # Return true is all of the legs have a valid position
-        return self.legs[0].calc_desired() and self.legs[1].calc_desired() and self.legs[2].calc_desired() and self.legs[3].calc_desired()
-        
+        if verify_results:
+            return self.legs[0].calc_desired() and self.legs[1].calc_desired() and self.legs[2].calc_desired() and self.legs[3].calc_desired()
+        else:
+            return
+
     def go_calculated_positions(self):
         """
         Moves each of the legs to their calculated positions.  
@@ -217,7 +220,7 @@ class Dog:
     orientation_log = [None] * orientation_log_size
     orientation_log_i = 0
     
-    def update_orientation(self, print_results = True):
+    def update_orientation(self, print_results = False):
         self.sensor_yaw, self.sensor_pitch, self.sensor_roll = self.imu.get_euler()  # Todo: Only do this once a second
         # invert pitch
         try:
