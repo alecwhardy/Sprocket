@@ -1,5 +1,6 @@
 import time
-from Walk import Crude_Gait, Crude_Balanced_Gait, Walk
+from Walk import Crude_Balanced_Gait, Walk
+from Walk_CrudeGait import Crude_Gait
 
 
 ''' 
