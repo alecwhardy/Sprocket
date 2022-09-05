@@ -115,6 +115,9 @@ class Motion:
         self.walk.walk(Walk.IN_PLACE)
         self.steps_remaining -= 1
 
+    def update_walk(self, direction):
+        self.direction = direction
+
     def do_walk(self, direction):
 
         """
@@ -122,6 +125,8 @@ class Motion:
 
         """
 
+        # Calling Commands.walk rapidly resets last_motion every time, causing insufficient walk time per step.
+        # Need to figure out how to call this function WITHOUT actually "doing" the walk
         self.last_motion = time.time()
 
         self.current_motion = self.WALK

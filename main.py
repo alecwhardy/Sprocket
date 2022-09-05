@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     # Schedule Events
     dog.schedule_event(dog.check_voltage, 30000)    # Check the voltage every 30s
-    dog.schedule_event(dog.update_orientation, 20) # Update the IMU every 20ms
+    # dog.schedule_event(dog.update_orientation, 20) # Update the IMU every 20ms  # Calling this too often makes the XBOX controller seem jerky!
     #og.schedule_event(dog.servos.updateAllStatus, 10) # Update the servo status every 10ms.  Need to make this a seperate thread because it interferes with xbox360 controller
 
     #dog.wake_up()

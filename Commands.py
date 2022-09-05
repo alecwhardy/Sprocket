@@ -183,8 +183,14 @@ class Commands:
             walk_x = float(args[1])
             walk_y = float(args[2])
             walk_yaw = float(args[3])
-            self.dog.motion.steps_remaining = n
-            self.dog.motion.do_walk((walk_x, walk_y, walk_yaw))
+            
+            # If not already walking, call do_walk initially.  Then, the motion handler will call do_walk on the correct timer
+            if self.dog.motion.current_motion != Motion.WALK:
+                self.dog.motion.steps_remaining = n
+                self.dog.motion.do_walk((walk_x, walk_y, walk_yaw))
+            # If we are already walking, don't call do_walk.  Just update the direction
+            else:
+                self.dog.motion.update_walk((walk_x, walk_y, walk_yaw))
 
         if self.dog.motion.walk.gait.NAME == "CRUDE_GAIT":
 

@@ -36,7 +36,7 @@ class Crude_Balanced_Gait:
     NAME = "CRUDE_BALANCED_GAIT"
 
     MAX_EXTENSION_X = 30 # Max amount the leg can move in or out in the X-direction
-    MAX_EXTENSION_Y = 50 # Max amount the leg can move forward or backwards in Y-direction
+    MAX_EXTENSION_Y = 100 # Max amount the leg can move forward or backwards in Y-direction
     MAX_EXTENSION_YAW = 50
    
     direction_x = 0    # Magnitude of X-direction walking motion
@@ -80,12 +80,13 @@ class Crude_Balanced_Gait:
 
     def calc_setpoints(self, dog, direction):
 
-        # Determine what positions the legs would be in if the dog was stationary
+        # Determine what positions the legs would be in if the dog was stationary, based on its current position
         # Now, dog.legs[*].desired_* will be updated
+        # TODO: Update all desired variables?
         dog.calc_position(
             dog.x,
-            dog.y,
-            dog.z,
+            dog.desired_y,
+            dog.desired_z,
             dog.roll,
             dog.pitch,
             dog.yaw,
@@ -158,10 +159,11 @@ class Crude_Balanced_Gait:
 
         if direction == Walk.STILL:
             self.state = 0
+            direction = [0, 0, 0]
         else:
             if self.state == 0:
                 self.state = 1
-            self.calc_setpoints(dog, direction)
+        self.calc_setpoints(dog, direction)
 
         if self.state == 0:
             dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["DOWN"])
