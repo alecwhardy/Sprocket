@@ -1,5 +1,6 @@
 from enum import Enum
 from struct import *
+from textwrap import dedent
 import math
 
 class XYZrobotServo:
@@ -75,11 +76,29 @@ class XYZrobotServo:
 		ALL = b'\x02'
 
 	class Status:
+
+		class StatusError:
+			def __init__(self, status_error_code):
+				self.EXCEED_POTENTIOMETER_RANGE_ERROR = bool(status_error_code & 0x01)
+				self.OVER_VOLTAGE_LIMITS_ERROR = bool(status_error_code & 0x02)
+				self.OVER_TEMPERATURE_ERROR = bool(status_error_code & 0x04)
+				self.OVER_CURRENT_ERROR = bool(status_error_code & 0x08)
+				self.PACKET_CHECKSUM_ERROR = bool(status_error_code & 0x20)
+				self.PACKET_DATA_ERROR = bool(status_error_code & 0x40)
+				self.PACKET_RX_FIFO_ERROR = bool(status_error_code & 0x80)
+
+			def __repr__(self):
+				return dedent(f"""
+						POTENTIOMETER_RANGE: {self.EXCEED_POTENTIOMETER_RANGE_ERROR}
+						OVER_VOLTAGE: {self.OVER_VOLTAGE_LIMITS_ERROR}
+						OVER_TEMPERATURE: {self.OVER_TEMPERATURE_ERROR}
+						OVER_CURRENT: {self.OVER_CURRENT_ERROR}
+						""")
 		
 		def __init__(self, bytes_in):
 			self.bytes = bytes_in
 			raw = unpack('BBHHHH', bytes_in)
-			self.statusError = raw[0]
+			self.statusError = self.StatusError(raw[0])
 			self.statusDetail = raw[1]
 			self.pwm = raw[2]
 			self.posRef = raw[3]
@@ -87,9 +106,12 @@ class XYZrobotServo:
 			self.iBus = raw[5]
 
 		def __repr__(self):
-
-			resp = "PWM: " + str(self.pwm) + "\nP_R: " + str(self.posRef) + "\nPos: " + str(self.position) + "\n"
-			return resp
+			return dedent(f"""
+					PWM:     {self.pwm}
+					POS REF: {self.posRef}
+					POS:     {self.position}
+					CURRENT: {self.iBus}
+					""")
 
 		def __bytes__(self):
 			return self.bytes

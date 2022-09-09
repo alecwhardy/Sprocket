@@ -5,7 +5,8 @@ from Leg import Leg
 from Dog import Dog
 from Controls.XboxControl import XboxControl
 from threading import Thread
-from Networking.DataServer import serve
+#from Networking.DataServer import serve
+from WebServer import start_server_thread
             
 if __name__ == '__main__':
 
@@ -32,6 +33,9 @@ if __name__ == '__main__':
     dog.schedule_event(dog.check_voltage, 30000)    # Check the voltage every 30s
     # dog.schedule_event(dog.update_orientation, 20) # Update the IMU every 20ms  # Calling this too often makes the XBOX controller seem jerky!
     #og.schedule_event(dog.servos.updateAllStatus, 10) # Update the servo status every 10ms.  Need to make this a seperate thread because it interferes with xbox360 controller
+
+    # Start the web server thread
+    # start_server_thread(dog)
 
     #dog.wake_up()
     dog.die()
