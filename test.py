@@ -22,8 +22,14 @@ if __name__ == '__main__':
     
 
     start_time = time.time()
+
+    for i in range(20):
     
-    for servo in servo_list:
-        servo.readStatus()
+        for servo in servo_list:
+            #position = servo.readStatus().position
+            position = int.from_bytes(servo.RAMRead(70, 2), 'little')
+            servo.setPosition(position + 1, 10)
+            
+            pass
 
     print("--- %s seconds ---" % (time.time() - start_time))

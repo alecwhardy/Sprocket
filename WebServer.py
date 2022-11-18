@@ -46,9 +46,23 @@ def random_data_plot_img():
 
 @app.route("/mjpeg")
 def mjpeg():
-    return Response(random_data_plot_img(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gather_webcam_img(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# setup camera and resolution
+cam = cv2.VideoCapture(0)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+def gather_webcam_img():
+    while True:
+        time.sleep(0.1)
+        _, img = cam.read()
+        _, frame = cv2.imencode('.jpg', img)
+        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n')
 
 def start_server_thread(dog_in):
     global dog
     dog = dog_in
     threading.Thread(target=lambda: app.run(debug=True, use_reloader=False, host='0.0.0.0')).start()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')

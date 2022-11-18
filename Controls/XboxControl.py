@@ -21,7 +21,7 @@ class XboxControl:
 
     STATIONARY_X_MULTIPLIER = 80
     STATIONARY_Y_MULTIPLIER = 80
-    STATIONARY_Z_MULTIPLIER = 10
+    STATIONARY_Z_MULTIPLIER = 20
 
     # How long to wait (in ms) between each Controller command
     UPDATE_PERIOD = 50
@@ -190,8 +190,29 @@ class XboxControl:
 
     def init_walk_mode(self):
         # TODO: Set all desired variables here?
-        self.dog.desired_y = self.dog.y
+        
+        # Set desired Y to 20
+        self.dog.desired_y = 20
+
+        # Set desired Z to current Z height
         self.dog.desired_z = self.dog.z
+
+        # Set playtime to 10, substep_time to 0.1
+        self.dog.motion.walk.gait.substep_motion_playtime = 11
+        self.dog.motion.walk.gait.substep_time = self.dog.motion.walk.gait.substep_motion_playtime / 100
+
+        # Set step height to 40
+        self.dog.motion.walk.gait.step_lift_amount = 40
+
+        print("Desired Y: {}, Desired Z: {}, Playtime: {}, Substep Time: {}, Step Height: {}".format(
+            self.dog.desired_y,
+            self.dog.desired_z,
+            self.dog.motion.walk.gait.substep_motion_playtime,
+            self.dog.motion.walk.gait.substep_time,
+            self.dog.motion.walk.gait.step_lift_amount
+        ))
+        
+
 
     def update_mode_led(self):
         self.controller.set_led(Xbox360Controller.LED_OFF)
@@ -253,75 +274,6 @@ class XboxControl:
         elif self.mode == self.MODE_WALK:
            return self.commands_walk()
 
-    # OLD COMMANDS_WALK CODE
-    # playtime = 15
-    # step_height = 50
-    # front_trim = 0
-    # y_offset = 0
-    # def commands_walk(self):
-
-    #     MIN_PLAYTIME_WALK = 5
-    #     MIN_PLAYTIME_TURN = 8
-    #     MAX_PLAYTIME = 50
-
-    #     command_queue = deque()
-
-    #     playtime = self.playtime
-    #     lift_amount = self.step_height
-    #     trim_f = self.front_trim    # Lift up the front legs higher because it drags
-
-    #     des_walk_speed = int(-100*self.axis_r['y'])
-    #     des_turn_speed = int(100*self.axis_r['x'])
-
-    #     step_len = int(-70*self.axis_r['y'])
-    #     # wturn_playtime = int(lin_interp(100, abs(des_turn_speed), 0, MIN_PLAYTIME_TURN, MAX_PLAYTIME))
-    #     wturn_playtime = 13
-
-    #     # if step_len > 100:
-    #     #     lift_amount += step_len//5
-
-    #     # Walk forward
-    #     if des_walk_speed > 10:
-        
-    #         # The offset to keep the robot straight is applied in the Walk gait now
-    #         # Let's apply the y-offset here so the robot leans forward (so the knees don't hit the ground)
-    #         self.dog.desired_y = self.y_offset
-    #         trim_r = 0.5*-des_turn_speed
-    #         command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime, trim_r, trim_f)))
-           
-    #         if not self.dog.motion.current_motion == Motion.WALK:
-    #             command_queue.append(Command(command = 'walk', args=['f']))
-
-    #     elif des_walk_speed < -10:
-    #         step_len = -step_len
-    #         command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime)))
-    #         if not self.dog.motion.current_motion == Motion.WALK:
-    #             command_queue.append(Command(command = 'walk', args=['b']))
-
-    #     elif des_turn_speed > 10:
-    #         step_len = 30
-    #         command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, wturn_playtime)))
-    #         if not self.dog.motion.current_motion == Motion.WALK:
-    #             command_queue.append(Command(command = 'walk', args=['tr']))
-        
-    #     elif des_turn_speed < -10:
-    #         step_len = 30
-    #         command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, wturn_playtime)))
-    #         if not self.dog.motion.current_motion == Motion.WALK:
-    #             command_queue.append(Command(command = 'walk', args=['tl']))
-
-    #     # Stop walking
-    #     else:
-    #         if not self.dog.motion.current_motion == Motion.STATIONARY:
-    #             command_queue.append(Command(command = 'walk_params', args=(step_len, lift_amount, playtime)))
-    #             command_queue.append(Command(command = 'stop', args=None))
-    #         else:
-    #             return None
-
-    #     if not len(command_queue) > 0:
-    #         return None
-    #     else:
-    #         return command_queue
 
     def commands_walk(self):
         WALK_AXIS_THRESHOLD = 0.2
@@ -401,7 +353,7 @@ class XboxControl:
 
                 des_x = 0
                 des_y = 0
-                des_z = 150
+                des_z = self.dog.NEUTRAL_HEIGHT
 
                 des_roll = 0
                 des_pitch = 0

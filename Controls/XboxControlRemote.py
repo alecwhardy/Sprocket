@@ -9,6 +9,8 @@ from functions import *
 from Walk import Walk
 from Motion import Motion
 
+from Dog import Dog
+
 # NOTE:  IF XBOX CONTROL IS ENABLED AND IN WALK MODE, CONSOLE COMMANDS WILL NOT WORK!!!
 
 class XboxControl:
@@ -303,7 +305,7 @@ class XboxControl:
 
                 des_x = 0
                 des_y = 0
-                des_z = 150
+                des_z = Dog.NEUTRAL_HEIGHT
 
                 des_roll = 0
                 des_pitch = 0

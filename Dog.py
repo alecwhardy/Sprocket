@@ -18,7 +18,7 @@ class Dog:
     LENGTH = 200
     WIDTH = 117
 
-    NEUTRAL_HEIGHT = 150
+    NEUTRAL_HEIGHT = 175
     NEUTRAL_SPEED = 30
 
     SHUTOFF_VOLTAGE = 8.5
@@ -191,7 +191,7 @@ class Dog:
     def wake_up(self):
         print("Resetting position 'waking up'")
         self.motion.motion_enable = True
-        self.go_position(0, 0, 150, 0, 0, 0, self.NEUTRAL_SPEED)
+        self.go_position(0, 0, self.NEUTRAL_HEIGHT, 0, 0, 0, self.NEUTRAL_SPEED)
 
         # Reset the LED policy for the servos, because if we died, then they are user-controlled and blue       
         for leg in self.legs:
@@ -206,6 +206,33 @@ class Dog:
     def servo_reboot(self):
         for servo in self.legs[0].servos:
             servo.reboot()
+
+    def get_highest_temp(self, do_print = True):
+        if not self.motion.motion_delay:
+            return
+        max_temp = 0
+        max_temp_ID = 0
+        # for servo in self.servos:
+        #     ret = servo.RAMRead(55, 1)
+        #     try:
+        #         temp = int(ret[0])
+        #     except:
+        #         return 0
+        #     if temp > max_temp:
+        #         max_temp = temp
+        #         max_temp_ID = servo.id
+
+        try:
+            ret = self.servos[5].RAMRead(55,1)
+            max_temp = int(ret[0])
+            max_temp_ID = self.servos[5].id
+        except:
+            return 0
+            
+
+        if do_print:
+            print(f"Max Temp Servo {max_temp_ID}: {max_temp}")
+        return max_temp
 
     def check_voltage(self):
             try:

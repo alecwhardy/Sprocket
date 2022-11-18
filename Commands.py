@@ -187,6 +187,7 @@ class Commands:
             # If not already walking, call do_walk initially.  Then, the motion handler will call do_walk on the correct timer
             if self.dog.motion.current_motion != Motion.WALK:
                 self.dog.motion.steps_remaining = n
+                self.dog.motion.walk.walk_init(self.dog)
                 self.dog.motion.do_walk((walk_x, walk_y, walk_yaw))
             # If we are already walking, don't call do_walk.  Just update the direction
             else:

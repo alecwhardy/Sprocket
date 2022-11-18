@@ -58,5 +58,5 @@ def try_to_change_ID(old_ID, new_ID, baud = 115200):
 
 
 if __name__ == '__main__':
-    success = try_to_change_ID(1, 6, 115200)
+    success = try_to_change_ID(1, 12, 115200)
     
