@@ -112,10 +112,6 @@ class Crude_Gait:
 
         cur_z = dog.z
 
-        # set all legs to neutral position
-        # for leg in dog.legs:
-        #     leg.go_position(0, 0, cur_z, 20)
-
         playtime = self.set_positions["UP"][3]
         sleeptime = playtime/100  # Playtime is in terms of 10ms, so this sets sleeptime = playtime
 
@@ -179,12 +175,6 @@ class Crude_Gait:
         dog.motion.request_absolute_leg(Leg.RL, *set_positions["DOWN"])
         dog.motion.request_absolute_leg(Leg.FL, *set_positions["DOWN"])
         dog.motion.request_delay(sleeptime)
-
-        # dog.legs[RR].go_position(*set_positions["DOWN"])
-        # dog.legs[RF].go_position(*set_positions["DOWN"])
-        # dog.legs[LR].go_position(*set_positions["DOWN"])
-        # dog.legs[LF].go_position(*set_positions["DOWN"])
-        # time.sleep(sleeptime)
 
 
     def _crude_step_forward(self, dog, set_positions, sleeptime):

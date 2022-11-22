@@ -182,77 +182,6 @@ class XboxControl:
             return command_queue
             
 
-
-
-
-
-
-
-    # def commands_walk(self, dog):
-
-    #     # Right stick is for walking forward/backward and turning
-    #     # Left stick is for walking sideways and Z-height
-
-    #     dog.go_position(0, 0, dog.z, 0, 0, 0, 20)
-
-    #     walk = Walk()
-    #     step_len = 30
-    #     lift_amount = 70
-    #     playtime = 12
-    #     # walk.update_set_positions(dog, step_len, lift_amount, playtime)
-
-    #     while self.mode == self.MODE_WALK:
-            
-    #         MIN_PLAYTIME_WALK = 5
-    #         MIN_PLAYTIME_TURN = 8
-    #         MAX_PLAYTIME = 50
-            
-    #         des_wf_speed = int(-100*self.controller.axis_r.y)
-    #         des_turn_speed = int(100*self.controller.axis_r.x)
-
-    #         # wf_playtime = int(lin_interp(100, des_wf_speed, 0, MIN_PLAYTIME_WALK, MAX_PLAYTIME))
-    #         wf_playtime = 10
-    #         step_len = int(-100*self.controller.axis_r.y)
-    #         wturn_playtime = int(lin_interp(100, abs(des_turn_speed), 0, MIN_PLAYTIME_TURN, MAX_PLAYTIME))
-
-    #         if step_len > 100:
-    #             lift_amount += step_len//5
-
-
-    #         if des_wf_speed > 10:
-    #             walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
-
-    #             # Apply correction factor to "BACK_DOWN_L"
-    #             old = walk.set_positions["BACK_DOWN_L"]
-    #             corrected_position = (old[0], 1.3*old[1], old[2], old[3])
-    #             walk.set_positions["BACK_DOWN_L"] = corrected_position
-
-    #             walk.crude_walk(dog, Walk.FORWARD)
-    #             print("WF: Steplen {}".format(step_len))
-
-    #         elif des_wf_speed < -10:
-    #             step_len = -step_len
-    #             walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
-    #             walk.crude_walk(dog, Walk.BACKWARD)
-    #             print("WB: Steplen {}".format(step_len))
-
-    #         elif des_turn_speed > 20:
-    #             step_len = 30
-    #             walk.update_set_positions(dog, step_len, lift_amount, wturn_playtime)
-    #             walk.crude_walk(dog, Walk.TURN_RIGHT)
-    #             print("TURN_R: Playtime {}".format(wturn_playtime))
-
-    #         elif des_turn_speed < -20:
-    #             step_len = 30
-    #             walk.update_set_positions(dog, step_len, lift_amount, wturn_playtime)
-    #             walk.crude_walk(dog, Walk.TURN_LEFT)
-    #             print("TURN_L: Playtime {}".format(wturn_playtime))
-
-    #         else:
-    #             walk.update_set_positions(dog, step_len, lift_amount, wf_playtime)
-    #             walk.crude_walk(dog, Walk.STILL)
-    #             print("Standing Still")
-
     def commands_stationary(self):
    
         des_x = 0
@@ -281,8 +210,8 @@ class XboxControl:
             if des_z > 230:
                 des_z = 230
 
-            elif des_z < 30:
-                des_z = 30
+            elif des_z < 40:
+                des_z = 40
 
             des_pitch = -20*self.axis_l['y']
 

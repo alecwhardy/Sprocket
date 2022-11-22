@@ -1,5 +1,6 @@
 from enum import Enum
 import math
+from XYZrobotServo import *
 
 class Leg:
 
@@ -28,8 +29,8 @@ class Leg:
     desired_speed = 0
     desired_done = False     # After we update desired_*, this is set False until we have moved there
 
-    THETA_KNEE_MIN = 15
-    THETA_KNEE_MAX = 160
+    THETA_KNEE_MIN = 10
+    THETA_KNEE_MAX = 175
 
     L1_len = 120
     L2_len = 120
@@ -97,15 +98,7 @@ class Leg:
         return shoulder_torque, thigh_torque, knee_torque
         
 
-
-    def go_shoulder_angle(self, position_degrees, speed):
-        """Sets the shoulder position, a positive valuve moves the shoulders "up", like a shrug
-
-        Args:
-            position_degrees ([type]): [description]
-            speed ([type]): [description]
-        """
-
+    def verify_shoulder_angle(self, position_degrees):
         # Make sure we are at a valid position.  0 degrees is flat, allow +/- 45 degrees
         if not -60 <= position_degrees <= 60:
             # Invalid Position!  TODO: Log error!
@@ -115,18 +108,26 @@ class Leg:
         # Position angles need to be inverted on the RHS
         if self.side == 'R':
             position_degrees = -position_degrees
+            
+        return position_degrees
+    
+    def get_shoulder_raw_pos(self, position_degrees):
+        position_degrees = self.verify_shoulder_angle(position_degrees)
+        return XYZrobotServo.get_raw_position(position_degrees)
+        
+    def go_shoulder_angle(self, position_degrees, speed):
+        """Sets the shoulder position, a positive valuve moves the shoulders "up", like a shrug
 
+        Args:
+            position_degrees ([type]): [description]
+            speed ([type]): [description]
+        """
+        
+        position_degrees = self.verify_shoulder_angle(position_degrees)
         self.shoulder_stream.set_position_deg(position_degrees, speed)
         
 
-    def go_thigh_angle(self, position_degrees, speed):
-        """Set the position of the thigh, 0 degrees is straight horizontal backwards, 90 degrees is straight down
-
-        Args:
-            position_degrees (int): Can be between -45 degrees and 165 degrees. 
-            speed (uint8): Time in 10ms units to respond to new position
-        """
-
+    def verify_thigh_angle(self, position_degrees):
         if not -45 <= position_degrees <= 165:
             # Invalid Position!  TODO: Log error!
             return
@@ -136,18 +137,26 @@ class Leg:
         # Position angles need to be inverted on the LHS
         if self.side == 'L':
             position_degrees = -position_degrees
+            
+        return position_degrees
 
-        self.thigh_stream.set_position_deg(position_degrees, speed)
-        
+    def get_thigh_raw_pos(self, position_degrees):
+        position_degrees = self.verify_thigh_angle(position_degrees)
+        return XYZrobotServo.get_raw_position(position_degrees)
 
-    def go_knee_angle(self, position_degrees, speed):
-        """Set the position of the knee, relative to the thigh
+    def go_thigh_angle(self, position_degrees, speed):
+        """Set the position of the thigh, 0 degrees is straight horizontal backwards, 90 degrees is straight down
 
         Args:
-            position_degrees (int): Can be between 15 degrees and 160 degrees. 
+            position_degrees (int): Can be between -45 degrees and 165 degrees. 
             speed (uint8): Time in 10ms units to respond to new position
         """
 
+        position_degrees = self.verify_thigh_angle(position_degrees)
+        self.thigh_stream.set_position_deg(position_degrees, speed)
+        
+
+    def verify_knee_angle(self, position_degrees):
         if not self.THETA_KNEE_MIN <= position_degrees <= self.THETA_KNEE_MAX:
             # Invalid Position!  TODO: Log error!
             return
@@ -157,7 +166,22 @@ class Leg:
         # Position angles need to be inverted on the LHS
         if self.side == 'L':
             position_degrees = -position_degrees
+            
+        return position_degrees
 
+    def get_knee_raw_pos(self, position_degrees):
+        position_degrees = self.verify_knee_angle(position_degrees)
+        return XYZrobotServo.get_raw_position(position_degrees)
+
+    def go_knee_angle(self, position_degrees, speed):
+        """Set the position of the knee, relative to the thigh
+
+        Args:
+            position_degrees (int): Can be between 15 degrees and 160 degrees. 
+            speed (uint8): Time in 10ms units to respond to new position
+        """
+        
+        position_degrees = self.verify_knee_angle(position_degrees)
         self.knee_stream.set_position_deg(position_degrees, speed)
 
     def set_desired(self, x, y, z, speed=None):
@@ -175,6 +199,16 @@ class Leg:
         self.desired_y = self.y
         self.desired_z = self.z
         self.desired_speed = self.speed
+
+    def verify_desired(self):
+        x = self.desired_x
+        y = self.desired_y
+        z = self.desired_z
+        # playtime = self.desired_speed
+        
+        theta_shoulder, theta_thigh, theta_knee = self.calc_position(x, y, z)
+        return theta_shoulder, theta_thigh, theta_knee
+    
 
     def go_desired(self):
         """Moves leg to the desired pos_x, pos_y, pos_z positions.  Make sure you set these variables first before calling this function

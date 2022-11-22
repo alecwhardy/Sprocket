@@ -351,9 +351,7 @@ class XYZrobotServo:
 		status = self.readStatus
 		return status.position
 
-
-	def set_position_deg(self, position_deg, playtime):
-		
+	def get_raw_position(position_deg):
 		x1 = -165
 		x2 = position_deg
 		x3 = 165
@@ -361,6 +359,10 @@ class XYZrobotServo:
 		y3 = 1023
 
 		deg_setpoint = math.ceil((((x2-x1)*(y3-y1))/(x3-x1))+y1)
+		return deg_setpoint
+
+	def set_position_deg(self, position_deg, playtime):
+		deg_setpoint = XYZrobotServo.get_raw_position(position_deg)
 		self.setPosition(deg_setpoint, playtime)
 		
 	def sendIJog(self, goal, type, playtime):
@@ -464,7 +466,7 @@ class XYZrobotServos:
 			data[4] = position['playtime']
 			data_block += data
 
-		self.servos[0].sendRequest(self.CMD_I_JOG, data, broadcast = True)
+		self.servos[0].sendRequest(XYZrobotServo.CMD_I_JOG, data_block, broadcast = True)
 
 
 if __name__ == "__main__":
@@ -496,9 +498,10 @@ if __name__ == "__main__":
 	servos = XYZrobotServos(servo_list)
 	
 	positions = [
-		{'id': 1, 'goal': 500, 'playtime': 10},
-		{'id': 2, 'goal': 520, 'playtime': 9},
-		{'id': 3, 'goal': 480, 'playtime': 7},
+		{'id': 2, 'goal': 500, 'playtime': 100},
+		{'id': 5, 'goal': 520, 'playtime': 90},
+		{'id': 8, 'goal': 480, 'playtime': 70},
+  		{'id': 11, 'goal': 480, 'playtime': 70},
 	]
 
 	servos.broadcast_setPosition(positions)

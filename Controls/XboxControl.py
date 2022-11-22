@@ -329,8 +329,8 @@ class XboxControl:
             if des_z > 230:
                 des_z = 230
 
-            elif des_z < 30:
-                des_z = 30
+            elif des_z < 40:
+                des_z = 40
 
             des_pitch = -20*self.axis_l['y']
 

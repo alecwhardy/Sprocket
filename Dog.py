@@ -145,15 +145,28 @@ class Dog:
         
         Make sure to call dog.calc_position() or leg.calc_position() first before calling this function.
         """
+        
+        goto_positions = []
+        
         for leg in self.legs:
-            leg.go_shoulder_angle(leg.calc_theta_shoulder, leg.desired_speed)
+            #leg.go_shoulder_angle(leg.calc_theta_shoulder, leg.desired_speed)
+            goto_positions.append({'id': leg.shoulder_ID, 
+                                   'goal': leg.get_shoulder_raw_pos(leg.calc_theta_shoulder), 
+                                   'playtime': leg.desired_speed})
         # Go to the calculated thigh angles
         for leg in self.legs:
-            leg.go_thigh_angle(leg.calc_theta_thigh, leg.desired_speed)
+            #leg.go_thigh_angle(leg.calc_theta_thigh, leg.desired_speed)
+            goto_positions.append({'id': leg.thigh_ID, 
+                                   'goal': leg.get_thigh_raw_pos(leg.calc_theta_thigh), 
+                                   'playtime': leg.desired_speed})
         # Go to the calculated knee angles
         for leg in self.legs:
-            leg.go_knee_angle(leg.calc_theta_knee, leg.desired_speed)
-
+            #leg.go_knee_angle(leg.calc_theta_knee, leg.desired_speed)
+            goto_positions.append({'id': leg.knee_ID, 
+                                   'goal': leg.get_knee_raw_pos(leg.calc_theta_knee), 
+                                   'playtime': leg.desired_speed})
+            
+        self.servos.broadcast_setPosition(goto_positions)
 
     def go_position(self, X, Y, Z, roll, pitch, yaw, speed):
         """ Calculates the positions for each leg given the dog's desired X, Y, Z, roll, pitch, yaw, speed parameters, and then moves there immediately.
@@ -191,7 +204,8 @@ class Dog:
     def wake_up(self):
         print("Resetting position 'waking up'")
         self.motion.motion_enable = True
-        self.go_position(0, 0, self.NEUTRAL_HEIGHT, 0, 0, 0, self.NEUTRAL_SPEED)
+        #self.go_position(0, 0, self.NEUTRAL_HEIGHT, 0, 0, 0, self.NEUTRAL_SPEED)
+        self.motion.request_absolute_position(0, 0, self.NEUTRAL_HEIGHT, 0, 0, 0, self.NEUTRAL_SPEED)
 
         # Reset the LED policy for the servos, because if we died, then they are user-controlled and blue       
         for leg in self.legs:

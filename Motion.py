@@ -1,6 +1,7 @@
 import time
 from Walk import Crude_Balanced_Gait, Walk
 from Walk_CrudeGait import Crude_Gait
+from XYZrobotServo import XYZrobotServo
 
 
 ''' 
@@ -135,15 +136,43 @@ class Motion:
         self.walk.walk(direction)
         self.steps_remaining -= 1
 
+    def move_legs_to_desired_sync(self):
+        goto_positions = []
+        for leg in self.dog.legs:
+            if not leg.desired_done:
+                leg.x = leg.desired_x
+                leg.y = leg.desired_y
+                leg.z = leg.desired_z
+                leg.speed = leg.desired_speed
+                
+                theta_shoulder, theta_thigh, theta_knee = leg.verify_desired()
+                
+                goto_positions.append({'id': leg.shoulder_ID, 
+                                       'goal': leg.get_shoulder_raw_pos(theta_shoulder), 
+                                       'playtime': leg.desired_speed})
+                
+                goto_positions.append({'id': leg.knee_ID, 
+                                       'goal': leg.get_knee_raw_pos(theta_knee), 
+                                       'playtime': leg.desired_speed})
+                
+                goto_positions.append({'id': leg.thigh_ID, 
+                                       'goal': leg.get_thigh_raw_pos(theta_thigh), 
+                                       'playtime': leg.desired_speed})
+                
+                self.dog.servos.broadcast_setPosition(goto_positions)
+                leg.desired_done = True
+                #leg.go_desired()
+                
+        
+
     def update_motion(self):
 
         if not self.motion_enable:
             return
 
         # If we have a desired leg position that has not yet been handled
-        for leg in self.dog.legs:
-            if not leg.desired_done:
-                leg.go_desired()
+        self.move_legs_to_desired_sync()
+
         
         if self.current_motion == self.WALK or self.current_motion == self.PRANCE:
 
@@ -167,7 +196,5 @@ class Motion:
                 self.stop_walk()
 
         # Go to the new desired leg positions
-        for leg in self.dog.legs:
-            if not leg.desired_done:
-                leg.go_desired()
+        self.move_legs_to_desired_sync()
 
