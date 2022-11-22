@@ -2,3 +2,4 @@ __pycache__/*
 .vscode/*
 Audio/*
 *.pyc
+Controls/__pycache__/ConsoleControl.cpython-37.pyc

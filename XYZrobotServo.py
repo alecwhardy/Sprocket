@@ -1,6 +1,8 @@
 from enum import Enum
 from struct import *
 from textwrap import dedent
+from typing import TypedDict
+from collections.abc import Iterable
 import math
 
 class XYZrobotServo:
@@ -188,7 +190,7 @@ class XYZrobotServo:
 		return ret[0]
 
 
-	def sendRequest(self, cmd, data1, data2 = None):
+	def sendRequest(self, cmd, data1, data2 = None, broadcast = False):
 		""" Sends a command to the servos.
 
 		Args:
@@ -197,12 +199,14 @@ class XYZrobotServo:
 			data2 (bytearray, optional): Data. Defaults to None.
 		"""
 
+		id = self.id if not broadcast else 254
+
 		data1size = 0 if data1 is None else len(data1)
 		data2size = 0 if data2 is None else len(data2)
 
 		header = bytearray(7)
 		size = data1size + data2size + len(header)
-		checksum = size ^ self.id ^ cmd
+		checksum = size ^ id ^ cmd
 
 		# Calculate checksum
 		for i in range(data1size):
@@ -213,7 +217,7 @@ class XYZrobotServo:
 		header[0] = 0xFF
 		header[1] = 0xFF
 		header[2] = size
-		header[3] = self.id
+		header[3] = id
 		header[4] = cmd
 		header[5] = checksum & 0xFE
 		header[6] = ~checksum & 0xFE
@@ -331,6 +335,14 @@ class XYZrobotServo:
 		ack_header = self.readAck(self.CMD_STAT, status_response, 10)
 		return self.Status(status_response)
 
+	def sendStatusRequest(self, flush_read = False):
+		"""Requests that a servo return a STAT Ack.  Does not wait or read the Ack
+		"""
+		if flush_read:
+			self.flushRead()
+		self.sendRequest(self.CMD_STAT, None)
+
+
 	def setPosition(self, position, playtime):
 		self.sendIJog(position, self.SET_POSITION_CONTROL, playtime)
 
@@ -416,6 +428,11 @@ class XYZrobotServo:
 
 class XYZrobotServos:
 
+	class Position(TypedDict):
+		id: int
+		goal: int
+		playtime: int
+
 	status = [None] * 12
 
 	def __init__(self, servos):
@@ -434,17 +451,58 @@ class XYZrobotServos:
 			output += servo_status.bytes
 		return bytes(output)
 
+	def broadcast_setPosition(self, positions: Iterable[Position]):
+		
+		data_block = bytearray()
+		
+		for position in positions:
+			data = bytearray(5)
+			data[0] = position['goal'] & 0xFF
+			data[1] = position['goal'] >> 8 & 0xFF
+			data[2] = XYZrobotServo.SET_POSITION_CONTROL
+			data[3] = position['id']
+			data[4] = position['playtime']
+			data_block += data
+
+		self.servos[0].sendRequest(self.CMD_I_JOG, data, broadcast = True)
 
 
 if __name__ == "__main__":
-	import serial, time
+# 	import serial, time
 	
+# 	ser = serial.Serial('/dev/ttyS0', baudrate = 115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
+	
+# 	leg_servo = XYZrobotServo(ser, 254, debug=False)
+
+# 	start_time = time.time()
+# 	leg_servo.flushRead()
+# 	for _ in range(100):
+# 		leg_servo.sendStatusRequest()
+# 		time.sleep(.05)
+# 		a = ser.read(200)
+# 		print(len(a))
+
+# 	print("--- %s seconds ---" % (time.time() - start_time))
+
+	import serial, time
+
+	# Create the Servo serial stream
 	ser = serial.Serial('/dev/ttyS0', baudrate = 115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
-	i = 0 # motor number
-	leg_servo = XYZrobotServo(ser, i+1, debug=False)
-	while True:
-		status = leg_servo.readStatus()
-		print(status)
-		time.sleep(0.01)
+
+	# Create a XYZrobotServo object for each leg servo
+	servo_list = []
+	for i in range(12):
+		servo_list.append(XYZrobotServo(ser, i+1, debug=False))
+	servos = XYZrobotServos(servo_list)
+	
+	positions = [
+		{'id': 1, 'goal': 500, 'playtime': 10},
+		{'id': 2, 'goal': 520, 'playtime': 9},
+		{'id': 3, 'goal': 480, 'playtime': 7},
+	]
+
+	servos.broadcast_setPosition(positions)
+
+	pass
 
 

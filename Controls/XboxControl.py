@@ -142,10 +142,10 @@ class XboxControl:
                     print(f"Setting dog desired_z to {self.dog.desired_z}")
             else:
                 if abs(hat.x) == 1:
-                    # Servo Playtime
-                    self.dog.motion.walk.gait.substep_motion_playtime += hat.x
-                    self.dog.motion.walk.gait.substep_time = self.dog.motion.walk.gait.substep_motion_playtime / 100
-                    print(f"Setting playtime to {self.dog.motion.walk.gait.substep_motion_playtime}, substep_time to {self.dog.motion.walk.gait.substep_time}")
+                    # Servo Swingtime
+                    self.dog.motion.walk.gait.swing_time += hat.x
+                    #self.dog.motion.walk.gait.substep_time = self.dog.motion.walk.gait.substep_motion_playtime / 100
+                    print(f"Setting swingtime to {self.dog.motion.walk.gait.swing_time}")
                 elif abs(hat.y) == 1:
                     # Step Height
                     self.dog.motion.walk.gait.step_lift_amount += hat.y

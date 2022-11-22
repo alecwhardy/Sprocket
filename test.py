@@ -22,14 +22,24 @@ if __name__ == '__main__':
     
 
     start_time = time.time()
+    servo_list[0].flushRead()
 
-    for i in range(20):
+    for i in range(100):
     
         for servo in servo_list:
             #position = servo.readStatus().position
-            position = int.from_bytes(servo.RAMRead(70, 2), 'little')
-            servo.setPosition(position + 1, 10)
-            
-            pass
+            #position = int.from_bytes(servo.RAMRead(70, 2), 'little')
+            #servo.setPosition(position + 1, 10)
+            servo.sendStatusRequest()
+            time.sleep(.0022)
+
+        #time.sleep(.0001)
+        # a = ser.read(204)
+        status_response = bytearray(10)
+        servo.readAck(servo.CMD_STAT, status_response, 10)
+        status = servo.Status(status_response)
+        # print(len(a))
+        
+        
 
     print("--- %s seconds ---" % (time.time() - start_time))

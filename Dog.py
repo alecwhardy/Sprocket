@@ -21,7 +21,7 @@ class Dog:
     NEUTRAL_HEIGHT = 175
     NEUTRAL_SPEED = 30
 
-    SHUTOFF_VOLTAGE = 8.5
+    SHUTOFF_VOLTAGE = 7.5
 
     scheduled_events = [] # tuples of (function, event period ms, last execution time)
 

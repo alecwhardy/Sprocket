@@ -50,6 +50,9 @@ class Crude_Balanced_Gait:
     substep_time = 0.11         #Units of 1s
     substep_motion_playtime = 10 #Units of 10ms
 
+    swing_time = 10  # Units of 10ms
+    lift_time  = 2   # Units of 10ms
+
     state = 0
 
     # Leg order (FL, FR, RL, RR)
@@ -109,7 +112,7 @@ class Crude_Balanced_Gait:
         self.direction_y = lin_interp(-1.0, direction[1], 1.0, -self.MAX_EXTENSION_Y, self.MAX_EXTENSION_Y)
         self.direction_yaw = lin_interp(-1.0, direction[2], 1.0, -self.MAX_EXTENSION_YAW, self.MAX_EXTENSION_YAW)
 
-        playtime = self.substep_motion_playtime
+        # playtime = self.substep_motion_playtime
         
         for leg_num, setpoint in enumerate(self.setpoints):
 
@@ -122,42 +125,49 @@ class Crude_Balanced_Gait:
                 dog.legs[leg_num].desired_x, 
                 dog.legs[leg_num].desired_y, 
                 dog.legs[leg_num].desired_z, 
-                playtime)
+                self.lift_time)
 
             setpoint["UP"] = (
                 dog.legs[leg_num].desired_x, 
                 dog.legs[leg_num].desired_y, 
                 dog.legs[leg_num].desired_z - self.step_lift_amount, 
-                playtime)
+                self.lift_time)
 
             # We need the "OUT" and "IN" sub step states to account for rotation.  
             # During a rotation, during state 2, the legs all point inwards, and during state 4, the legs all point outwards.
+            
+            # Swinging
             setpoint["UP_EXT_OUT"] = (
                 dog.legs[leg_num].desired_x + x_rotational_offset + self.direction_x, 
                 dog.legs[leg_num].desired_y - self.direction_y, 
                 dog.legs[leg_num].desired_z - self.step_lift_amount, 
-                playtime)
+                self.swing_time)
 
+            # Swinging
             setpoint["UP_EXT_IN"] = (
                 dog.legs[leg_num].desired_x - x_rotational_offset + self.direction_x, 
                 dog.legs[leg_num].desired_y - self.direction_y, 
                 dog.legs[leg_num].desired_z - self.step_lift_amount, 
-                playtime)
+                self.swing_time)
 
+            # On Ground
             setpoint["DOWN_EXT_OUT"] = (
                 dog.legs[leg_num].desired_x + x_rotational_offset - self.direction_x, 
                 dog.legs[leg_num].desired_y + self.direction_y, 
                 dog.legs[leg_num].desired_z, 
-                playtime)
+                self.swing_time + 2*self.lift_time)
 
+            # On Ground
             setpoint["DOWN_EXT_IN"] = (
                 dog.legs[leg_num].desired_x - x_rotational_offset - self.direction_x, 
                 dog.legs[leg_num].desired_y + self.direction_y, 
                 dog.legs[leg_num].desired_z, 
-                playtime)
+                self.swing_time + 2*self.lift_time)
 
                 # TODO: FACTOR IN setpoint_modifiers!!!
             
+
+
 
     def walk(self, dog, direction):
         """ Allows the dog to walk when commanded a desired X-speed, Y-speed, and Turn-speed (Yaw-speed).
@@ -185,36 +195,79 @@ class Crude_Balanced_Gait:
             dog.motion.request_delay(self.substep_time)
             return # We want to stay in state 0 unless we are forced to state 1 (start walking)
         
+        # elif self.state == 1:
+        #     dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["UP"])
+        #     dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["DOWN"])
+        #     dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["DOWN"])
+        #     dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["UP"])
+        #     dog.motion.request_delay(self.substep_time)
+
+        # elif self.state == 2:
+        #     dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["UP_EXT_OUT"])
+        #     dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["DOWN_EXT_OUT"])
+        #     dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["DOWN_EXT_OUT"])
+        #     dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["UP_EXT_OUT"])
+        #     dog.motion.request_delay(self.substep_time)
+
         elif self.state == 1:
-            dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["UP"])
-            dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["DOWN"])
-            dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["DOWN"])
-            dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["UP"])
-            dog.motion.request_delay(self.substep_time)
+            # Group 1 LIFT, Group 2 is on ground, moving back
+            dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["UP"])            # Lifting
+            dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["DOWN_EXT_OUT"])  # Ground, moving
+            dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["DOWN_EXT_OUT"])  # Ground, moving
+            dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["UP"])            # Lifting
+            dog.motion.request_delay(self.lift_time/100)
 
         elif self.state == 2:
-            dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["UP_EXT_OUT"])
-            dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["DOWN_EXT_OUT"])
-            dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["DOWN_EXT_OUT"])
-            dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["UP_EXT_OUT"])
-            dog.motion.request_delay(self.substep_time)
+            dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["UP_EXT_OUT"])   # Swinging
+            # Ground, moving                                                                 # Ground, moving
+            # Ground, moving                                                                 # Ground, moving
+            dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["UP_EXT_OUT"])   # Swinging
+            dog.motion.request_delay(self.swing_time/100)
 
         elif self.state == 3:
-            dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["DOWN"])
-            dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["UP"])
-            dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["UP"])
-            dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["DOWN"])
-            dog.motion.request_delay(self.substep_time)
+            dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["DOWN"])         # Dropping
+            # Ground, moving                                                                 # Ground, done moving
+            # Ground, moving                                                                 # Ground, done moving
+            dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["DOWN"])         # Dropping
+            dog.motion.request_delay(self.lift_time/100)
+
+        # elif self.state == 3:
+        #     dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["DOWN"])
+        #     dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["UP"])
+        #     dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["UP"])
+        #     dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["DOWN"])
+        #     dog.motion.request_delay(self.substep_time)
         
+        # elif self.state == 4:
+        #     dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["DOWN_EXT_IN"])
+        #     dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["UP_EXT_IN"])
+        #     dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["UP_EXT_IN"])
+        #     dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["DOWN_EXT_IN"])
+        #     dog.motion.request_delay(self.substep_time)
+
         elif self.state == 4:
-            dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["DOWN_EXT_IN"])
-            dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["UP_EXT_IN"])
-            dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["UP_EXT_IN"])
-            dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["DOWN_EXT_IN"])
-            dog.motion.request_delay(self.substep_time)
+            dog.motion.request_absolute_leg(Leg.FL, *self.setpoints[Leg.FL]["DOWN_EXT_IN"])  # Ground, moving
+            dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["UP"])           # Lifting
+            dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["UP"])           # Lifting
+            dog.motion.request_absolute_leg(Leg.RR, *self.setpoints[Leg.RR]["DOWN_EXT_IN"])  # Ground, moving
+            dog.motion.request_delay(self.lift_time/100)
+
+        elif self.state == 5:
+            # Ground, moving                                                                 # Ground, moving
+            dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["UP_EXT_IN"])    # Swinging
+            dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["UP_EXT_IN"])    # Swinging
+            # Ground, moving                                                                 # Ground, moving
+            dog.motion.request_delay(self.swing_time/100)
+
+        elif self.state == 6:
+            # Ground, moving                                                                 # Ground, done moving
+            dog.motion.request_absolute_leg(Leg.FR, *self.setpoints[Leg.FR]["DOWN"])         # Dropping
+            dog.motion.request_absolute_leg(Leg.RL, *self.setpoints[Leg.RL]["DOWN"])         # Dropping
+            # Ground, moving                                                                 # Ground, done moving
+            dog.motion.request_delay(self.lift_time/100)
 
         self.state += 1
-        if self.state > 4:
+        if self.state > 6:
             self.state = 1
 
 
