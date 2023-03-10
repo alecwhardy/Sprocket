@@ -48,9 +48,9 @@ class Crude_Balanced_Gait:
 
     step_lift_amount = 50
     substep_time = 0.11         #Units of 1s
-    substep_motion_playtime = 10 #Units of 10ms
+    # substep_motion_playtime = 10 #Units of 10ms
 
-    swing_time = 10  # Units of 10ms
+    swing_time = 20  # Units of 10ms
     lift_time  = 2   # Units of 10ms
 
     state = 0
@@ -89,8 +89,10 @@ class Crude_Balanced_Gait:
         Args:
             dog: Dog
         """
-        dog.desired_y = dog.y
-        dog.desired_z = dog.z
+        
+        pass
+        # dog.desired_y = dog.y
+        # dog.desired_z = dog.z
 
     def calc_setpoints(self, dog, direction):
 

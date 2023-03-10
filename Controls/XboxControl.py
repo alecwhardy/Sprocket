@@ -198,7 +198,7 @@ class XboxControl:
         self.dog.desired_z = self.dog.z
 
         # Set playtime to 10, substep_time to 0.1
-        self.dog.motion.walk.gait.substep_motion_playtime = 11
+        self.dog.motion.walk.gait.substep_motion_playtime = 20
         self.dog.motion.walk.gait.substep_time = self.dog.motion.walk.gait.substep_motion_playtime / 100
 
         # Set step height to 40

@@ -138,7 +138,7 @@ class XboxControl:
 
          # Clear the y-offset (set below) so the robot leans forward (so the knees don't hit the ground)
          # TODO: Move this to a better spot!
-        self.dog.motion.desired_y = 0
+        # self.dog.motion.desired_y = 0
 
         # Walk forward
         if des_walk_speed > 10:
