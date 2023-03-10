@@ -22,21 +22,30 @@
             // The callback function is invoked whenever the server emits data
             // to the client. The data is then displayed in the "Received"
             // section of the page.
-            socket.on('my_response', function(msg, cb) {
+            socket.on('log', function(msg, cb) {
                 $('#log').append('<br>' + $('<div/>').text('Received #' + msg.count + ': ' + msg.data).html());
                 if (cb)
                     cb();
             });
 
-            // Test response received from server is handled here
-            socket.on('test_response', function(msg) {
-                $('#log').append('<br>' + $('<div/>').text(msg.data).html());
-            })
+            socket.on('dog_data', function(msg, cb){
 
-            // Broadcast response from server is handled here
-            socket.on('broadcast_response', function(msg) {
-                $('#log').append('<br>' + $('<div/>').text(msg.data).html());
-            })
+                // Positions
+                $('#x_val').text(msg.x);
+                $('#y_val').text(msg.y);
+                $('#z_val').text(msg.z);
+                $('#roll_val').text(msg.roll);
+                $('#pitch_val').text(msg.pitch);
+                $('#yaw_val').text(msg.yaw);
+                
+                // Desired Positions
+                $('#desired_x_val').text(msg.desired_x);
+                $('#desired_y_val').text(msg.desired_y);
+                $('#desired_z_val').text(msg.desired_z);
+                $('#desired_roll_val').text(msg.desired_roll);
+                $('#desired_pitch_val').text(msg.desired_pitch);
+                $('#desired_yaw_val').text(msg.desired_yaw);
+            });
 
             // Handlers for the different forms in the page.
             // These accept data from the user and send it to the server in a
@@ -53,7 +62,22 @@
     </script>
 </head>
 <body>
-    <h1>Flask-SocketIO Test</h1>
+    <h1>Sprocket</h1>
+
+     <img src="/webcam_stream" >
+
+    <h2>Orientation</h2>
+
+    <table>
+        <tr><th>Var</th><th>Value</th><th>Desired</th></tr>
+        <tr><td>X</td><td><span id="x_val">X</span></td><td><span id="desired_x_val">X_des</span></td></tr>
+        <tr><td>Y</td><td><span id="y_val">Y</span></td><td><span id="desired_y_val">Y_des</span></td></tr>
+        <tr><td>Z</td><td><span id="z_val">Z</span></td><td><span id="desired_z_val">Z_des</span></td></tr>
+        <tr><td>Roll</td><td><span id="roll_val">Roll</span></td><td><span id="desired_roll_val">Roll_des</span></td></tr>
+        <tr><td>Pitch</td><td><span id="pitch_val">Pitch</span></td><td><span id="desired_pitch_val">Pitch_des</span></td></tr>
+        <tr><td>Yaw</td><td><span id="yaw_val">Yaw</span></td><td><span id="desired_yaw_val">Yaw_des</span></td></tr>
+    </table>
+
     <p>
       Async mode is: <b>{{ async_mode }}</b><br>
     </p>

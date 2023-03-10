@@ -153,8 +153,6 @@ class XboxControl:
                 
 
 
-
-
     def update_axes(self):
         """ Updates the axis positions, taking into account the axis_threshold
 
