@@ -275,6 +275,13 @@ class Commands:
     def end_playback(self):
         self.dog.command_handler.motion_playback_loop = False
         self.dog.command_handler.motion_playback = None
+        
+    def read_voltage(self):
+        try:
+            self.dog.voltage = self.dog.legs[0].servos[0].getVoltage()
+        except:
+            # Sometimes we don't get voltage quick enough
+            pass
 
     def down(self):
         pass

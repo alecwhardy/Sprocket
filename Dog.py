@@ -23,6 +23,7 @@ class Dog:
     NEUTRAL_HEIGHT = 175
     NEUTRAL_SPEED = 30
 
+    voltage = 0
     SHUTOFF_VOLTAGE = 7.5
 
     scheduled_events = [] # tuples of (function, event period ms, last execution time)
@@ -251,15 +252,6 @@ class Dog:
             print(f"Max Temp Servo {max_temp_ID}: {max_temp}")
         return max_temp
 
-    def check_voltage(self):
-            try:
-                if self.legs[0].servos[0].getVoltage() < self.SHUTOFF_VOLTAGE:
-                    self.die()
-                    print("Batteries Dead!")
-            except:
-                # Sometimes we don't get voltage quick enough
-                pass
-
     orientation_log_size = 100
     orientation_log = [None] * orientation_log_size
     orientation_log_i = 0
@@ -333,6 +325,11 @@ class Dog:
 
             # update motion
             self.motion.update_motion()
+            
+            # Check to make sure the batteries aren't dead
+            if self.voltage > 0 and self.voltage < self.SHUTOFF_VOLTAGE:
+                self.die()
+                print("Batteries Dead!")
 
             time.sleep(0)
 
