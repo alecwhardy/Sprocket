@@ -3,3 +3,4 @@ __pycache__/*
 Audio/*
 *.pyc
 Controls/__pycache__/ConsoleControl.cpython-37.pyc
+logs/*

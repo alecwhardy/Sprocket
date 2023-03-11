@@ -7,6 +7,8 @@ from IMU import IMU
 from DataPlot import DataPlot
 from XYZrobotServo import XYZrobotServo
 from functions import *
+from log import setup_logger
+from datetime import datetime
 
 class Dog:
     """ Contains all of the necessary code to determine the current state of the dog.  All behavior is handled by the Behavior class
@@ -65,6 +67,7 @@ class Dog:
         self.motion = Motion(self)
         self.imu = IMU()
         self.dataplot = DataPlot()
+        self.cmd_logger = setup_logger('command_logger', f"logs/{datetime.today().strftime('%Y-%m-%d %H:%M:%S')}.log")
 
 
     def get_voltage(self):

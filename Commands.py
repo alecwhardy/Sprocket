@@ -14,7 +14,7 @@ class Command:
         self.args = args
 
     def __repr__(self) -> str:
-        return "Command: " + str(self.command)
+        return f"Command: {str(self.command)}  Args: {str(self.args)}"
 
 
 class Commands:

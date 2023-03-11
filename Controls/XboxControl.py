@@ -273,24 +273,30 @@ class XboxControl:
            return self.commands_walk()
 
 
+    # last_walk variables keep previous loop's resired walking args
+    last_walk_x = 0
+    last_walk_y = 0
+    last_walk_yaw = 0
     def commands_walk(self):
         WALK_AXIS_THRESHOLD = 0.2
-        walk_x = self.axis_r['x']
-        walk_y = -self.axis_r['y']
-        walk_yaw = self.axis_l['x']
+        walk_x = round(self.axis_r['x'], 2)
+        walk_y = round(-self.axis_r['y'], 2)
+        walk_yaw = round(self.axis_l['x'], 2)
         command_queue = deque()
         
         if abs(walk_x) > WALK_AXIS_THRESHOLD or abs(walk_y) > WALK_AXIS_THRESHOLD or abs(walk_yaw) > WALK_AXIS_THRESHOLD:
             #print(f"WALKING: {walk_x}, {walk_y}, {walk_yaw}")
             self.dog.motion.current_motion == Motion.WALK
-            command_queue.append(Command(command = 'walk', args=[-1, walk_x, walk_y, walk_yaw]))
+            if walk_x != self.last_walk_x or walk_y != self.last_walk_y or walk_yaw != self.last_walk_yaw:
+                self.last_walk_x = walk_x
+                self.last_walk_y = walk_y
+                self.last_walk_yaw = walk_yaw
+                command_queue.append(Command(command = 'walk', args=[-1, walk_x, walk_y, walk_yaw]))
         else:
             # No walk command.  Either walk in place or stop walking
             #if not self.walk_in_place:
-            if True:
+            if self.dog.motion.current_motion != Motion.STATIONARY:
                 command_queue.append(Command(command = 'stop', args=None))
-                self.dog.motion.current_motion == Motion.STATIONARY
-                #print(f"Stopping Walk")
 
 
         if not len(command_queue) > 0:
@@ -315,12 +321,12 @@ class XboxControl:
         # self.controller.button_y.when_pressed = self.reboot
         
         while self.mode == self.MODE_STATIONARY:
-            des_x = -self.STATIONARY_X_MULTIPLIER*self.axis_r['x']
+            des_x = round(-self.STATIONARY_X_MULTIPLIER*self.axis_r['x'], 2)
             
             if not self.controller.button_trigger_r.is_pressed:
-                des_y = self.STATIONARY_Y_MULTIPLIER*-self.axis_r['y']
+                des_y = round(self.STATIONARY_Y_MULTIPLIER*-self.axis_r['y'], 2)
             else:
-                des_z += self.STATIONARY_Z_MULTIPLIER*-self.axis_r['y']
+                des_z += round(self.STATIONARY_Z_MULTIPLIER*-self.axis_r['y'], 2)
 
 
             # TODO: Make these constants
@@ -330,20 +336,23 @@ class XboxControl:
             elif des_z < 40:
                 des_z = 40
 
-            des_pitch = -20*self.axis_l['y']
+            des_pitch = round(-20*self.axis_l['y'], 2)
 
             if not self.controller.button_trigger_l.is_pressed:
-                des_roll = 30*self.axis_l['x']
+                des_roll = round(30*self.axis_l['x'], 2)
             else:
-                des_yaw += 20*self.axis_l['x']
+                des_yaw += round(20*self.axis_l['x'], 2)
 
             # print("{:3.0f} {:3.0f} {:3.0f} {:3.0f} {:3.0f} {:3.0f}".format(des_x, des_y, des_z, des_roll, des_pitch, des_yaw))
 
             try:
+                # If we are already at the position we are about to command, no need to send the command
+                if self.dog.x == des_x and self.dog.y == des_y and self.dog.z == des_z and self.dog.roll == des_roll and self.dog.pitch == des_pitch and self.dog.yaw == des_yaw:
+                    return
                 # Absolute move command:
                 command = Command(command = "absolute_move", args = (des_x, des_y, des_z, des_roll, des_pitch, des_yaw, des_speed))
-                
                 return command
+                
             except ValueError:
                 
                 if self.controller.has_rumble:
