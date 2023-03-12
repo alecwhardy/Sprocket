@@ -1,0 +1,223 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Flask-SocketIO Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+    
+    <!-- Flot -->
+    <!--<script language="javascript" type="text/javascript" src="../../source/jquery.js"></script>-->
+    <!-- From https://cdnjs.com/libraries/flot -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/4.2.4/jquery.canvaswrapper.min.js" integrity="sha512-Vj7rQBCQNDAbJNM5crhM6nzBoR1oIeE82OQDmx0l1ptN+7T5AQuRzzsQ+rqkuibqT14JjChkpB+8DW5fmjrjnw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/4.2.4/jquery.colorhelpers.min.js" integrity="sha512-RGIHP1MFDEu59mHN99u1dekTm292JN8zvLTx+ltDjjOB6QcUMXXbbfXRB0bCz/lw3DDb0s122933xNnnyxzxZg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/4.2.4/jquery.flot.js" integrity="sha512-b0/xA9839WwDovAHA0nMyu/6/Vtd58xyMub+i9MRpz7Lv6PbeasD5Ww4SB3QEZHC/KZTsj1+cJFJY9Ivei1wfQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/4.2.4/jquery.flot.saturated.min.js" integrity="sha512-D0IA9fF9uH3Q6dTdjIOmnOrwROGVxXC3CO1dz5TxNNT10zRS/fCiAdxCovyLtYPS9v1S3usVL8lonvqb4Nr8JQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/4.2.4/jquery.flot.browser.min.js" integrity="sha512-VQd/q4C1w/PN6MI00uurfwSiFb6tLkt/ocprvkNjh7Dgf7phD3Z970CSxX5ni5aYC4bsinQtfKUk7aCL5bTQfQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/4.2.4/jquery.flot.drawSeries.min.js" integrity="sha512-cEdCW5Rl66IAawVmTqXmX6IaOJMRyvnlDlq/aRZ/vmkrJ4eQupSd7hhXxX9wY39G0d83qRKoIIf+oMEZnL8cuw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/4.2.4/jquery.flot.uiConstants.min.js" integrity="sha512-02f7kh8oGru0zDziDj2PSAa6OIhkh0FR8StvcTvmN6bsqzxnrD9TFP7TffYVbX5HLMjgL8syriRbn7W1zTq9DQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/flot.css') }}">
+
+
+    <script type="text/javascript">
+
+        $(function() {
+    
+            // We use an inline data source in the example, usually data would
+            // be fetched from a server
+    
+            var data = [],
+                totalPoints = 300;
+    
+            function getRandomData() {
+    
+                if (data.length > 0)
+                    data = data.slice(1);
+    
+                // Do a random walk
+    
+                while (data.length < totalPoints) {
+    
+                    var prev = data.length > 0 ? data[data.length - 1] : 50,
+                        //y = prev + Math.random() * 10 - 5;
+                        y = $('#cpu_val').text() / 100;
+    
+                    if (y < 0) {
+                        y = 0;
+                    } else if (y > 100) {
+                        y = 100;
+                    }
+    
+                    data.push(y);
+                }
+    
+                // Zip the generated y values with the x values
+    
+                var res = [];
+                for (var i = 0; i < data.length; ++i) {
+                    res.push([i, data[i]])
+                }
+    
+                return res;
+            }
+    
+            // Set up the control widget
+    
+            var updateInterval = 30;
+            $("#updateInterval").val(updateInterval).change(function () {
+                var v = $(this).val();
+                if (v && !isNaN(+v)) {
+                    updateInterval = +v;
+                    if (updateInterval < 1) {
+                        updateInterval = 1;
+                    } else if (updateInterval > 2000) {
+                        updateInterval = 2000;
+                    }
+                    $(this).val("" + updateInterval);
+                }
+            });
+    
+            var plot = $.plot("#placeholder", [ getRandomData() ], {
+                series: {
+                    shadowSize: 0	// Drawing is faster without shadows
+                },
+                yaxis: {
+                    min: 0,
+                    max: 100
+                },
+                xaxis: {
+                    show: false
+                }
+            });
+    
+            function update() {
+    
+                plot.setData([getRandomData()]);
+    
+                // Since the axes don't change, we don't need to call plot.setupGrid()
+    
+                plot.draw();
+                setTimeout(update, updateInterval);
+            }
+    
+            update();
+    
+            // Add the Flot version string to the footer
+    
+            $("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+        });
+    
+        </script>
+    
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function() {
+            // Connect to the Socket.IO server.
+            // The connection URL has the following format, relative to the current page:
+            //     http[s]://<domain>:<port>[/<namespace>]
+            var socket = io();
+
+            // Event handler for new connections.
+            // The callback function is invoked when a connection with the
+            // server is established.
+            socket.on('connect', function() {
+                socket.emit('my_event', {data: 'I\'m connected!'});
+            });
+
+            // Event handler for server sent data.
+            // The callback function is invoked whenever the server emits data
+            // to the client. The data is then displayed in the "Received"
+            // section of the page.
+            socket.on('log', function(msg, cb) {
+                $('#log').append('<br>' + $('<div/>').text('Received #' + msg.count + ': ' + msg.data).html());
+                if (cb)
+                    cb();
+            });
+
+            socket.on('dog_data', function(msg, cb){
+
+                // Positions
+                $('#x_val').text(msg.x);
+                $('#y_val').text(msg.y);
+                $('#z_val').text(msg.z);
+                $('#roll_val').text(msg.roll);
+                $('#pitch_val').text(msg.pitch);
+                $('#yaw_val').text(msg.yaw);
+                
+                // Desired Positions
+                $('#desired_x_val').text(msg.desired_x);
+                $('#desired_y_val').text(msg.desired_y);
+                $('#desired_z_val').text(msg.desired_z);
+                $('#desired_roll_val').text(msg.desired_roll);
+                $('#desired_pitch_val').text(msg.desired_pitch);
+                $('#desired_yaw_val').text(msg.desired_yaw);
+
+                // Voltage
+                $('#voltage_val').text(msg.voltage);
+                $('#cpu_val').text(msg.cpu);
+                $('#memory_val').text(msg.memory);
+            });
+
+            // Handlers for the different forms in the page.
+            // These accept data from the user and send it to the server in a
+            // variety of ways
+            $('form#test').submit(function(event) {
+                socket.emit('test_message', {data: 'Test message sent'});
+                return false;
+            });
+            $('form#broadcast').submit(function(event) {
+                socket.emit('broadcast_message', {data: 'broadcast triggered'});
+                return false;
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Sprocket</h1>
+
+     <img src="/webcam_stream" >
+
+    <h2>Orientation</h2>
+
+    <table>
+        <tr><th>Var</th><th>Value</th><th>Desired</th></tr>
+        <tr><td>X</td><td><span id="x_val">X</span></td><td><span id="desired_x_val">X_des</span></td></tr>
+        <tr><td>Y</td><td><span id="y_val">Y</span></td><td><span id="desired_y_val">Y_des</span></td></tr>
+        <tr><td>Z</td><td><span id="z_val">Z</span></td><td><span id="desired_z_val">Z_des</span></td></tr>
+        <tr><td>Roll</td><td><span id="roll_val">Roll</span></td><td><span id="desired_roll_val">Roll_des</span></td></tr>
+        <tr><td>Pitch</td><td><span id="pitch_val">Pitch</span></td><td><span id="desired_pitch_val">Pitch_des</span></td></tr>
+        <tr><td>Yaw</td><td><span id="yaw_val">Yaw</span></td><td><span id="desired_yaw_val">Yaw_des</span></td></tr>
+    </table>
+
+    <h2>System</h2>
+    <p>Voltage: <span id="voltage_val">0</span>V</p>
+    <p>CPU: <span id="cpu_val">0</span>%</p>
+    <p>Memory: <span id="memory_val">0</span>MB</p>
+
+    <p>
+      Async mode is: <b>{{ async_mode }}</b><br>
+    </p>
+    <h2>Send:</h2>
+    <form id="test" method="POST" action="#">
+        <input type="submit" value="Test">
+    </form>
+    <form id="broadcast" method="POST" action="#">
+        <input type="submit" value="Broadcast">
+    </form>
+    <h2>Receive:</h2>
+    <div id="log"></div>
+
+    <div id="content">
+
+		<div class="demo-container">
+			<div id="placeholder" class="demo-placeholder"></div>
+		</div>
+
+		<p>You can update a chart periodically to get a real-time effect by using a timer to insert the new data in the plot and redraw it.</p>
+
+		<p>Time between updates: <input id="updateInterval" type="text" value="" style="text-align: right; width:5em"> milliseconds</p>
+
+	</div>
+
+
+</body>
+</html>

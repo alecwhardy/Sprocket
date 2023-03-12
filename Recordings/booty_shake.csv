@@ -1,0 +1,51 @@
+# Move to the neutral position
+500, A, 0, 0, 175, 0, 0, 0, 50
+
+# Lean forward
+0, CA, 0, 0, 175, 0, -25, 0
+0, CL, 2, 0, 0, 200
+0, CL, 3, 0, 0, 200
+500, CM
+
+# Butt Right
+0, CL, 2, -70, 0, 215
+0, CL, 3, -70, 0, 205
+250, CM
+
+# Butt Left
+0, CL, 2, 70, 0, 205
+0, CL, 3, 70, 0, 215
+250, CM
+
+# Butt Right
+0, CL, 2, -70, 0, 215
+0, CL, 3, -70, 0, 205
+250, CM
+
+# Butt Left
+0, CL, 2, 70, 0, 205
+0, CL, 3, 70, 0, 215
+250, CM
+
+# Butt Right
+0, CL, 2, -70, 0, 215
+0, CL, 3, -70, 0, 205
+250, CM
+
+# Butt Left
+0, CL, 2, 70, 0, 205
+0, CL, 3, 70, 0, 215
+250, CM
+
+# Butt Right
+0, CL, 2, -70, 0, 215
+0, CL, 3, -70, 0, 205
+250, CM
+
+# Butt Left
+0, CL, 2, 70, 0, 205
+0, CL, 3, 70, 0, 215
+250, CM
+
+# Move to the neutral position
+500, A, 0, 0, 175, 0, 0, 0, 50

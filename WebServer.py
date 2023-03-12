@@ -1,15 +1,20 @@
 import threading
+import psutil
 
 from flask import Flask, Response, render_template
 from flask_socketio import SocketIO, emit
-
 from threading import Lock
 
 import WebCam
+import logging
+
+from Commands import Command
 
 app = Flask(__name__)
+app.logger.disabled = True
+logging.getLogger('werkzeug').disabled = True
 dog = None  # Loaded after start_server_thread call
-socketio = SocketIO(app)
+socketio = SocketIO(app, logger = False)
 thread = None
 thread_lock = Lock()
 
@@ -38,6 +43,11 @@ def on_connect(auth):
         if thread is None:
             thread = socketio.start_background_task(send_data)
     emit('connect', {'data': 'Connected', 'count': 0})
+    
+@socketio.on('command')
+def on_command(command):
+    global dog
+    dog.command_handler.command_queue.append(Command(command['command'], command['args']))
 
 def send_data():
     """Example of how to send server generated events to clients."""
@@ -63,6 +73,12 @@ def send_data():
                             'desired_roll': "{:.2f}".format(dog.desired_roll),
                             'desired_pitch': "{:.2f}".format(dog.desired_pitch),
                             'desired_yaw': "{:.2f}".format(dog.desired_yaw),
+                            'voltage':"{:.2f}".format(dog.voltage),
+                            'cpu':"{:.2f}".format(psutil.cpu_percent()),
+                            'memory':"{:.2f}".format(psutil.virtual_memory()[2]),
+                            'sensor_roll':"{:.2f}".format(dog.sensor_roll),
+                            'sensor_pitch':"{:.2f}".format(dog.sensor_pitch),
+                            'sensor_heading':"{:.2f}".format(dog.sensor_heading),
                         })
         
 

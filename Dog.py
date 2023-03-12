@@ -49,7 +49,7 @@ class Dog:
     # The true roll, pitch, and yaw, as determined by the IMU
     sensor_roll = 0
     sensor_pitch = 0
-    sensor_yaw = 0
+    sensor_heading = 0
 
     def __init__(self, servos):
         """[summary]
@@ -257,12 +257,11 @@ class Dog:
     orientation_log_i = 0
     
     def update_orientation(self, print_results = False):
-        self.sensor_yaw, self.sensor_pitch, self.sensor_roll = self.imu.get_euler()  # Todo: Only do this once a second
-        # invert pitch
-        try:
-            self.sensor_pitch = -self.sensor_pitch
-        except:
-            return  # No IMU data
+        heading, pitch, roll = self.imu.get_euler()
+        if heading is None or pitch is None or roll is None:
+            return
+        else:
+            self.sensor_heading, self.sensor_pitch, self.sensor_roll = heading, -pitch, roll  # Todo: Only do this once a second
         
         # Save the last 100 datapoints (5s of data is we update every 50ms)
         self.orientation_log[self.orientation_log_i] = self.imu.sensor.gyro

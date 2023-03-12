@@ -45,17 +45,41 @@
                 $('#desired_roll_val').text(msg.desired_roll);
                 $('#desired_pitch_val').text(msg.desired_pitch);
                 $('#desired_yaw_val').text(msg.desired_yaw);
+
+                // Voltage
+                $('#voltage_val').text(msg.voltage);
+                $('#cpu_val').text(msg.cpu);
+                $('#memory_val').text(msg.memory);
+
+                //Orientation
+                $('#sensor_roll_val').text(msg.sensor_roll);
+                $('#sensor_pitch_val').text(msg.sensor_pitch);
+                $('#sensor_heading_val').text(msg.sensor_heading);
             });
 
-            // Handlers for the different forms in the page.
-            // These accept data from the user and send it to the server in a
-            // variety of ways
-            $('form#test').submit(function(event) {
-                socket.emit('test_message', {data: 'Test message sent'});
+            // Commands
+            $('form#bark').submit(function(event) {
+                socket.emit('command', {command: 'bark', args: null});
                 return false;
             });
-            $('form#broadcast').submit(function(event) {
-                socket.emit('broadcast_message', {data: 'broadcast triggered'});
+            $('form#stand').submit(function(event) {
+                socket.emit('command', {command: 'reset_position', args: null});
+                return false;
+            });
+            $('form#sit').submit(function(event) {
+                socket.emit('command', {command: 'sit', args: null});
+                return false;
+            });
+            $('form#down').submit(function(event) {
+                socket.emit('command', {command: 'down', args: null});
+                return false;
+            });
+            $('form#pee').submit(function(event) {
+                socket.emit('command', {command: 'start_playback', args: ['pee']});
+                return false;
+            });
+            $('form#booty_shake').submit(function(event) {
+                socket.emit('command', {command: 'start_playback', args: ['booty_shake']});
                 return false;
             });
         });
@@ -69,24 +93,38 @@
     <h2>Orientation</h2>
 
     <table>
-        <tr><th>Var</th><th>Value</th><th>Desired</th></tr>
-        <tr><td>X</td><td><span id="x_val">X</span></td><td><span id="desired_x_val">X_des</span></td></tr>
-        <tr><td>Y</td><td><span id="y_val">Y</span></td><td><span id="desired_y_val">Y_des</span></td></tr>
-        <tr><td>Z</td><td><span id="z_val">Z</span></td><td><span id="desired_z_val">Z_des</span></td></tr>
-        <tr><td>Roll</td><td><span id="roll_val">Roll</span></td><td><span id="desired_roll_val">Roll_des</span></td></tr>
-        <tr><td>Pitch</td><td><span id="pitch_val">Pitch</span></td><td><span id="desired_pitch_val">Pitch_des</span></td></tr>
-        <tr><td>Yaw</td><td><span id="yaw_val">Yaw</span></td><td><span id="desired_yaw_val">Yaw_des</span></td></tr>
+        <tr><th>Var</th><th>Value</th><th>Desired</th><th>Sensor</th></tr>
+        <tr><td>X</td><td><span id="x_val">X</span></td><td><span id="desired_x_val">X_des</span></td><td>&nbsp;</td></tr>
+        <tr><td>Y</td><td><span id="y_val">Y</span></td><td><span id="desired_y_val">Y_des</span></td><td>&nbsp;</td></tr>
+        <tr><td>Z</td><td><span id="z_val">Z</span></td><td><span id="desired_z_val">Z_des</span></td><td>&nbsp;</td></tr>
+        <tr><td>Roll</td><td><span id="roll_val">Roll</span></td><td><span id="desired_roll_val">Roll_des</span></td><td><span id="sensor_roll_val">0</span></td></tr>
+        <tr><td>Pitch</td><td><span id="pitch_val">Pitch</span></td><td><span id="desired_pitch_val">Pitch_des</span></td><td><span id="sensor_pitch_val">0</span></td></tr>
+        <tr><td>Yaw</td><td><span id="yaw_val">Yaw</span></td><td><span id="desired_yaw_val">Yaw_des</span></td><td><span id="sensor_heading_val">0</span></td></tr>
     </table>
 
-    <p>
-      Async mode is: <b>{{ async_mode }}</b><br>
-    </p>
+    <h2>System</h2>
+    <p>Voltage: <span id="voltage_val">0</span>V</p>
+    <p>CPU: <span id="cpu_val">0</span>%</p>
+    <p>Memory: <span id="memory_val">0</span>MB</p>
+    
     <h2>Send:</h2>
-    <form id="test" method="POST" action="#">
-        <input type="submit" value="Test">
+    <form id="bark" method="POST" action="#">
+        <input type="submit" value="Bark">
     </form>
-    <form id="broadcast" method="POST" action="#">
-        <input type="submit" value="Broadcast">
+    <form id="stand" method="POST" action="#">
+        <input type="submit" value="Stand">
+    </form>
+    <form id="sit" method="POST" action="#">
+        <input type="submit" value="Sit">
+    </form>
+    <form id="down" method="POST" action="#">
+        <input type="submit" value="Down">
+    </form>
+    <form id="pee" method="POST" action="#">
+        <input type="submit" value="Pee">
+    </form>
+    <form id="booty_shake" method="POST" action="#">
+        <input type="submit" value="Shake Butt">
     </form>
     <h2>Receive:</h2>
     <div id="log"></div>

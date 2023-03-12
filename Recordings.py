@@ -27,15 +27,18 @@ class MotionPlayback:
         # Let's cheat and just load the whole file into RAM
         # This can be updated in the future to save memory, if that becomes an issue.
         self.playback_source = self.PLAYBACK_FROM_RAM
-        with open("Recordings/" + file + ".csv", 'r') as file:
-            for line in file:
-                if line[0] == '#' or line.strip() == '':
-                    continue
-                self.playback_queue.append(line.strip())
+        try:
+            with open("Recordings/" + file + ".csv", 'r') as file:
+                for line in file:
+                    if line[0] == '#' or line.strip() == '':
+                        continue
+                    self.playback_queue.append(line.strip())
 
-        # Save a copy of the entire queue so we can restore it if we do a rewind()
-        # If we update this later to save memory, we will just rewind the file.
-        self.playback_queue_copy = self.playback_queue.copy()
+            # Save a copy of the entire queue so we can restore it if we do a rewind()
+            # If we update this later to save memory, we will just rewind the file.
+            self.playback_queue_copy = self.playback_queue.copy()
+        except:
+            pass
 
 
     def load_test(self):
@@ -95,6 +98,8 @@ class MotionPlayback:
         elif frame_tokens[1].strip() == "CM":
             # Move to the calculated position
             return Commands.Command(command = "calc_move", args = None)
+        elif frame_tokens[1].strip() == "AUDIO":
+            return Commands.Command(command = "play_wav", args = [frame_tokens[2].strip()])
 
 
     def get_command(self):

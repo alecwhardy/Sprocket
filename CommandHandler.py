@@ -65,7 +65,8 @@ class CommandHandler:
     def handle_command(self):
         if len(self.command_queue) > 0:
             self.current_command = self.command_queue.popleft()
-            self.dog.cmd_logger.info(self.current_command)
+            if self.current_command.command != 'read_voltage':
+                self.dog.cmd_logger.info(self.current_command)
             command_method = getattr(self.commands, self.current_command.command)
             if self.current_command.args is None:
                 result = command_method()

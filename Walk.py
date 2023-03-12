@@ -101,8 +101,8 @@ class Crude_Balanced_Gait:
         # TODO: Update all desired variables?
         dog.calc_position(
             dog.x,
-            dog.desired_y,
-            dog.desired_z,
+            dog.y,
+            dog.z,
             dog.roll,
             dog.pitch,
             dog.yaw,

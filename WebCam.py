@@ -4,15 +4,19 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 cam = cv2.VideoCapture(0)
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+cam.set(cv2.CAP_PROP_BRIGHTNESS , 40.0)
+cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.8)
 def gather_webcam_img():
     while True:
-        time.sleep(0.1)
-        _, img = cam.read()
+        time.sleep(0.05)
+        ret, img = cam.read()
         _, frame = cv2.imencode('.jpg', img)
         yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n')
+        
         
 def random_noise_img():
     """Returns an image of random noise.
@@ -54,3 +58,4 @@ def random_data_plot_img():
         img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
         _, frame = cv2.imencode('.jpg', img)
         yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n')
+        

@@ -1,9 +1,8 @@
-from ast import If
 import time, os, psutil
-from cv2 import fastNlMeansDenoising
 from Motion import Motion
 from Walk import Walk
 from Recordings import MotionPlayback
+import Audio
 
 class Command:
     """ Really simple data type to pass into command queues. 
@@ -282,12 +281,22 @@ class Commands:
         except:
             # Sometimes we don't get voltage quick enough
             pass
+        
+    def play_wav(self, args):
+        if type(args) == str:
+            Audio.play_wav_async(args)
+        else:
+            Audio.play_wav_async(args[0])
+        
+    def bark(self):
+        self.play_wav("Audio/bark.wav")
+        
 
     def down(self):
-        pass
+        self.absolute_move(args=[0, 0, 30, 0, 0, 0, 50])
 
     def sit(self):
-        pass
+        self.absolute_move(args=[0, 0, 150, 0, 25, 0, 50])
 
     def run(self):
         pass

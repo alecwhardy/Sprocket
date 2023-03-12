@@ -9,8 +9,6 @@ from functions import *
 from Walk import Walk
 from Motion import Motion
 
-# NOTE:  IF XBOX CONTROL IS ENABLED AND IN WALK MODE, CONSOLE COMMANDS WILL NOT WORK!!!
-
 class XboxControl:
 
     CONNECTED = True
@@ -70,6 +68,9 @@ class XboxControl:
         self.update_mode_led()
 
         self.last_update = millis()
+        
+    def r_trigger_pressed(self):
+        return self.controller.axes[4].value > 0.01
 
     def button_select(self, button):
         if not self.CONTROL_ENABLE:
@@ -100,30 +101,6 @@ class XboxControl:
         
         if not self.CONTROL_ENABLE:
             return
-        
-        # if self.controller.button_trigger_r.is_pressed and (hat.y == 1 or hat.y == -1):
-        #     # Pressed UP or DOWN with R trigger button
-        #     self.front_trim += hat.y
-        #     print("Front Step Length Trim: {}".format(self.front_trim))
-        #     return
-
-        # elif self.controller.button_trigger_l.is_pressed and (hat.y == 1 or hat.y == -1):
-        #     # Pressed UP or DOWN with L trigger button
-        #     self.y_offset += hat.y
-        #     print("Y-Offset: {}".format(self.y_offset))
-        #     return
-        
-        # elif hat.y == 1 or hat.y == -1:
-        #     # Pressed UP or DOWN
-        #     self.step_height += hat.y
-        #     print("Step height: {}".format(self.step_height))
-        #     return
-        
-        # elif hat.x == 1 or hat.x == -1:
-        #     # Pressed RIGHT or LEFT
-        #     self.playtime += hat.x
-        #     print("Playtime: {}".format(self.playtime))
-        #     return
 
         if self.mode == self.MODE_WALK:
             # UP/DOWN           = "Playtime"
@@ -134,12 +111,12 @@ class XboxControl:
             if self.controller.button_trigger_r.is_pressed:
                 if abs(hat.x) == 1:
                     # Dog Y-position
-                    self.dog.desired_y += hat.x
-                    print(f"Setting dog desired_y to {self.dog.desired_y}")
+                    self.dog.y += hat.x
+                    print(f"Setting dog y to {self.dog.y}")
                 elif abs(hat.y) == 1:
                     # Dog Z-position
-                    self.dog.desired_z += hat.y
-                    print(f"Setting dog desired_z to {self.dog.desired_z}")
+                    self.dog.z += hat.y
+                    print(f"Setting dog z to {self.dog.z}")
             else:
                 if abs(hat.x) == 1:
                     # Servo Swingtime
@@ -189,8 +166,8 @@ class XboxControl:
     def init_walk_mode(self):
         # TODO: Set all desired variables here?
         
-        # Set desired Y to 20
-        self.dog.desired_y = 20
+        # Set Y to 20
+        self.dog.y = 20
 
         # Set desired Z to current Z height
         self.dog.desired_z = self.dog.z
@@ -282,21 +259,41 @@ class XboxControl:
         walk_x = round(self.axis_r['x'], 2)
         walk_y = round(-self.axis_r['y'], 2)
         walk_yaw = round(self.axis_l['x'], 2)
+        
         command_queue = deque()
         
-        if abs(walk_x) > WALK_AXIS_THRESHOLD or abs(walk_y) > WALK_AXIS_THRESHOLD or abs(walk_yaw) > WALK_AXIS_THRESHOLD:
-            #print(f"WALKING: {walk_x}, {walk_y}, {walk_yaw}")
-            self.dog.motion.current_motion == Motion.WALK
-            if walk_x != self.last_walk_x or walk_y != self.last_walk_y or walk_yaw != self.last_walk_yaw:
-                self.last_walk_x = walk_x
-                self.last_walk_y = walk_y
-                self.last_walk_yaw = walk_yaw
-                command_queue.append(Command(command = 'walk', args=[-1, walk_x, walk_y, walk_yaw]))
+        # Handle right trigger being pressed
+        if self.r_trigger_pressed():
+            
+            # If we are not currently moving, pass this off to the commands_stationary handler
+            if self.dog.motion.current_motion == Motion.STATIONARY:
+                return [self.commands_stationary()]
+            else:
+                # We are currently walking and now the trigger is being pressed
+                x_inc = walk_x
+                y_inc = walk_y
+                z_inc = walk_yaw
+                pitch_inc = round(self.axis_l['y'], 2)
+                self.dog.x += x_inc
+                self.dog.y += y_inc
+                self.dog.z += z_inc
+                self.dog.pitch += pitch_inc
+                
+            
         else:
-            # No walk command.  Either walk in place or stop walking
-            #if not self.walk_in_place:
-            if self.dog.motion.current_motion != Motion.STATIONARY:
-                command_queue.append(Command(command = 'stop', args=None))
+            if abs(walk_x) > WALK_AXIS_THRESHOLD or abs(walk_y) > WALK_AXIS_THRESHOLD or abs(walk_yaw) > WALK_AXIS_THRESHOLD:
+                #print(f"WALKING: {walk_x}, {walk_y}, {walk_yaw}")
+                self.dog.motion.current_motion == Motion.WALK
+                if walk_x != self.last_walk_x or walk_y != self.last_walk_y or walk_yaw != self.last_walk_yaw:
+                    self.last_walk_x = walk_x
+                    self.last_walk_y = walk_y
+                    self.last_walk_yaw = walk_yaw
+                    command_queue.append(Command(command = 'walk', args=[-1, walk_x, walk_y, walk_yaw]))
+            else:
+                # No walk command.  Either walk in place or stop walking
+                #if not self.walk_in_place:
+                if self.dog.motion.current_motion != Motion.STATIONARY:
+                    command_queue.append(Command(command = 'stop', args=None))
 
 
         if not len(command_queue) > 0:
@@ -320,7 +317,7 @@ class XboxControl:
         # TODO: Send REBOOT command
         # self.controller.button_y.when_pressed = self.reboot
         
-        while self.mode == self.MODE_STATIONARY:
+        while self.mode == self.MODE_STATIONARY or (self.mode == self.MODE_WALK and self.dog.motion.current_motion == Motion.STATIONARY):
             des_x = round(-self.STATIONARY_X_MULTIPLIER*self.axis_r['x'], 2)
             
             if not self.controller.button_trigger_r.is_pressed:
@@ -371,5 +368,7 @@ if __name__ == '__main__':
     os.system('sudo chmod 666 /sys/class/leds/xpad0/brightness')
     controller = Xbox360Controller(0, axis_threshold=0.1)
     while True:
-        print("{:3.5f} {:3.5f}".format(controller.axis_r.x, controller.axis_r.y))
+        # print("{:3.5f} {:3.5f}".format(controller.axis_r.x, controller.axis_r.y))
+        # time.sleep(.1)
+        print(controller.axes[4].value)
         time.sleep(.1)

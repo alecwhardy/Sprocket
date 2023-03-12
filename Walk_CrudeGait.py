@@ -42,7 +42,7 @@ class Crude_Gait:
         elif self.compass_dir is None and direction == self.FORWARD:
             # We are not still but the compass dir is None, so we must be starting a new walk
             # Record the compass direction so we can auto-trim to maintain it.
-            self.compass_dir = dog.sensor_yaw
+            self.compass_dir = dog.sensor_heading
 
     # This will ultimately be "get variable"
     def get_set_position(self, position):

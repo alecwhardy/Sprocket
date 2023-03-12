@@ -38,9 +38,9 @@ if __name__ == '__main__':
     # server_thread = Thread(target=serve, daemon=True, args=(dog, )).start() 
 
     # Schedule Events
-    dog.schedule_event(lambda: dog.command_handler.command_queue.append(Command(command = 'read_voltage', args=None)), 10000)    # Check the voltage every 30s
+    dog.schedule_event(lambda: dog.command_handler.command_queue.append(Command(command = 'read_voltage', args=None)), 3000)    # Check the voltage every 3s
     # dog.schedule_event(dog.get_highest_temp, 5000)    # Check the voltage every 5s
-    #dog.schedule_event(dog.update_orientation, 20) # Update the IMU every 20ms  # Calling this too often makes the XBOX controller seem jerky!
+    dog.schedule_event(dog.update_orientation, 20) # Update the IMU every 20ms  # Calling this too often makes the XBOX controller seem jerky!
     #dog.schedule_event(dog.servos.updateAllStatus, 10) # Update the servo status every 10ms.  Need to make this a seperate thread because it interferes with xbox360 controller
 
     # Start the web server thread

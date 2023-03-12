@@ -11,6 +11,12 @@ class IMU:
 
     def get_euler(self):
         return self.sensor.euler
+    
+    def get_heading(self):
+        try:
+            return self.sensor.euler[0]
+        except:
+            return 0
 
     def get_gyro_rss(self):
         

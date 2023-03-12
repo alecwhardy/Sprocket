@@ -1,0 +1,30 @@
+# Move to the neutral position
+500, A, 0, 0, 175, 0, 0, 0, 50
+
+# Lean forward, tilt
+500, A, 0, 20, 175, 20, 0, 0, 50
+
+# Play pee audio
+0, AUDIO, Audio/pee.wav
+
+# Lift rear leg for 4s
+# First, Calculate leg position.  Then move there
+0, CL, 2, -75, 0, 100
+4000, CM
+
+# Now shake leg
+0, CL, 2, -75, -40, 100
+100, CM
+0, CL, 2, -75, 40, 100
+100, CM
+0, CL, 2, -75, -40, 100
+100, CM
+0, CL, 2, -75, 40, 100
+100, CM
+0, CL, 2, -75, -40, 100
+100, CM
+0, CL, 2, -75, 40, 100
+100, CM
+
+# Move to the neutral position
+500, A, 0, 0, 175, 0, 0, 0, 50
